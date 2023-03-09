@@ -60,6 +60,12 @@ public class ModEntities
     /* Other */
     public static final RegistryObject<EntityType<EntityJack>> JACK = registerEntity("jack", EntityJack::new, 0.0F, 0.0F);
 
+    /* Farfania */
+    public static final RegistryObject<EntityType<DeportiveEntity>> DEPORTIVE = VehicleUtil.createEntityType(REGISTER, "deportive", DeportiveEntity::new, 1.85F, 1.15F);
+    public static final RegistryObject<EntityType<Deportive2Entity>> DEPORTIVE_2 = VehicleUtil.createEntityType(REGISTER, "deportive_2", Deportive2Entity::new, 1.85F, 1.15F);
+    public static final RegistryObject<EntityType<Deportive3Entity>> DEPORTIVE_3 = VehicleUtil.createEntityType(REGISTER, "deportive_3", Deportive3Entity::new, 1.85F, 1.15F);
+
+
     private static <T extends Entity> RegistryObject<EntityType<T>> registerEntity(String id, BiFunction<EntityType<T>, World, T> function, float width, float height)
     {
         EntityType<T> type = EntityType.Builder.of(function::apply, EntityClassification.MISC).sized(width, height).setTrackingRange(256).setUpdateInterval(1).noSummon().fireImmune().setShouldReceiveVelocityUpdates(true).build(id);

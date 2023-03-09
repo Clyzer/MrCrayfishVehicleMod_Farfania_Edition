@@ -162,6 +162,11 @@ public class ClientHandler
             registerVehicleRenderer(ModEntities.SOFACOPTER.get(), SofaHelicopterRenderer::new);
         }
 
+        /* Register Farfania */
+        registerVehicleRenderer(ModEntities.DEPORTIVE.get(), DeportiveRenderer::new);
+        registerVehicleRenderer(ModEntities.DEPORTIVE_2.get(), Deportive2Renderer::new);
+        registerVehicleRenderer(ModEntities.DEPORTIVE_3.get(), Deportive3Renderer::new);
+
         RenderingRegistry.registerEntityRenderingHandler(ModEntities.JACK.get(), com.mrcrayfish.vehicle.client.render.JackRenderer::new);
     }
 

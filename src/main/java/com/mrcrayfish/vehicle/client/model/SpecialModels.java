@@ -65,6 +65,11 @@ public enum SpecialModels implements ISpecialModel
     SOFA_HELICOPTER_ARM("sofa_helicopter_arm"),
     SOFA_HELICOPTER_SKID("sofa_helicopter_skid"),
 
+    /* Farfania */
+    DEPORTIVE_BODY("deportive_body"),
+    DEPORTIVE_2_BODY("deportive_2_body"),
+    DEPORTIVE_3_BODY("deportive_3_body"),
+
     /* Mod dependent models */
     RED_SOFA(new ModelResourceLocation("cfm:red_sofa", "inventory"), false),
     RAINBOW_SOFA(new ModelResourceLocation("cfm:rainbow_sofa", "inventory"), false);
