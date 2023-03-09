@@ -3,7 +3,7 @@ package com.mrcrayfish.vehicle.client.screen;
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mrcrayfish.vehicle.Config;
+import com.mrcrayfish.vehicle.VehicleConfig;
 import com.mrcrayfish.vehicle.crafting.FluidEntry;
 import com.mrcrayfish.vehicle.inventory.container.FluidExtractorContainer;
 import com.mrcrayfish.vehicle.tileentity.FluidExtractorTileEntity;
@@ -105,7 +105,7 @@ public class FluidExtractorScreen extends ContainerScreen<FluidExtractorContaine
             }
             RenderUtil.drawGradientRectHorizontal(left, top, right, bottom, -1, fluidColor);
             this.blit(matrixStack, startX + 93, startY + 34, 176, 14, 23, 16);
-            double extractionPercentage = this.fluidExtractorTileEntity.getExtractionProgress() / (double) Config.SERVER.extractorExtractTime.get();
+            double extractionPercentage = this.fluidExtractorTileEntity.getExtractionProgress() / (double) VehicleConfig.SERVER.extractorExtractTime.get();
             int extractionProgress = (int) (22 * extractionPercentage + 1);
             this.blit(matrixStack, startX + 93 + extractionProgress, startY + 34, 93 + extractionProgress, 34, 23 - extractionProgress, 17);
         }

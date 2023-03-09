@@ -1,7 +1,7 @@
 package com.mrcrayfish.vehicle.client;
 
 import com.mrcrayfish.obfuscate.common.data.SyncedPlayerData;
-import com.mrcrayfish.vehicle.Config;
+import com.mrcrayfish.vehicle.VehicleConfig;
 import com.mrcrayfish.vehicle.client.handler.ControllerHandler;
 import com.mrcrayfish.vehicle.entity.PoweredVehicleEntity;
 import com.mrcrayfish.vehicle.init.ModDataKeys;
@@ -59,7 +59,7 @@ public interface RayTraceFunction
             GasPumpTankTileEntity gasPumpTank = (GasPumpTankTileEntity) tileEntity;
             FluidTank tank = gasPumpTank.getFluidTank();
             FluidStack stack = tank.getFluid();
-            if(stack.isEmpty() || !Config.SERVER.validFuels.get().contains(stack.getFluid().getRegistryName().toString()))
+            if(stack.isEmpty() || !VehicleConfig.SERVER.validFuels.get().contains(stack.getFluid().getRegistryName().toString()))
                 break gasPump;
 
             if(rayTracer.getContinuousInteractionTickCounter() % 2 == 0)
@@ -81,7 +81,7 @@ public interface RayTraceFunction
 
             IFluidHandlerItem handler = optional.get();
             FluidStack fluidStack = handler.getFluidInTank(0);
-            if(fluidStack.isEmpty() || !Config.SERVER.validFuels.get().contains(fluidStack.getFluid().getRegistryName().toString()))
+            if(fluidStack.isEmpty() || !VehicleConfig.SERVER.validFuels.get().contains(fluidStack.getFluid().getRegistryName().toString()))
                 continue;
 
             if(rayTracer.getContinuousInteractionTickCounter() % 2 == 0)

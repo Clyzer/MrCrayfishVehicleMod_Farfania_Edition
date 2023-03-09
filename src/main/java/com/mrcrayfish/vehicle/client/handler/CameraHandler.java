@@ -1,6 +1,6 @@
 package com.mrcrayfish.vehicle.client.handler;
 
-import com.mrcrayfish.vehicle.Config;
+import com.mrcrayfish.vehicle.VehicleConfig;
 import com.mrcrayfish.vehicle.entity.VehicleEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.PointOfView;
@@ -24,7 +24,7 @@ public class CameraHandler
     @SubscribeEvent
     public void onEntityMount(EntityMountEvent event)
     {
-        if(!Config.CLIENT.autoPerspective.get())
+        if(!VehicleConfig.CLIENT.autoPerspective.get())
             return;
 
         if(!event.getWorldObj().isClientSide())
@@ -52,7 +52,7 @@ public class CameraHandler
     @SubscribeEvent
     public void onKeyInput(InputEvent.KeyInputEvent event)
     {
-        if(!Config.CLIENT.autoPerspective.get())
+        if(!VehicleConfig.CLIENT.autoPerspective.get())
             return;
 
         PlayerEntity player = Minecraft.getInstance().player;

@@ -1,6 +1,6 @@
 package com.mrcrayfish.vehicle.tileentity;
 
-import com.mrcrayfish.vehicle.Config;
+import com.mrcrayfish.vehicle.VehicleConfig;
 import com.mrcrayfish.vehicle.block.FluidExtractorBlock;
 import com.mrcrayfish.vehicle.block.FluidMixerBlock;
 import com.mrcrayfish.vehicle.block.RotatedObjectBlock;
@@ -54,9 +54,9 @@ public class FluidMixerTileEntity extends TileEntitySynced implements IInventory
 {
     private NonNullList<ItemStack> inventory = NonNullList.withSize(7, ItemStack.EMPTY);
 
-    private FluidTank tankBlaze = new FluidTank(Config.SERVER.mixerInputCapacity.get(), this::isValidFluid);
-    private FluidTank tankEnderSap = new FluidTank(Config.SERVER.mixerInputCapacity.get(), this::isValidFluid);
-    private FluidTank tankFuelium = new FluidTank(Config.SERVER.mixerOutputCapacity.get(), stack -> stack.getFluid() == ModFluids.FUELIUM.get());
+    private FluidTank tankBlaze = new FluidTank(VehicleConfig.SERVER.mixerInputCapacity.get(), this::isValidFluid);
+    private FluidTank tankEnderSap = new FluidTank(VehicleConfig.SERVER.mixerInputCapacity.get(), this::isValidFluid);
+    private FluidTank tankFuelium = new FluidTank(VehicleConfig.SERVER.mixerOutputCapacity.get(), stack -> stack.getFluid() == ModFluids.FUELIUM.get());
 
     private static final int SLOT_FUEL = 0;
     public static final int SLOT_INGREDIENT = 1;
@@ -256,7 +256,7 @@ public class FluidMixerTileEntity extends TileEntitySynced implements IInventory
                 {
                     this.setMixing(true);
 
-                    if(this.extractionProgress++ == Config.SERVER.mixerMixTime.get())
+                    if(this.extractionProgress++ == VehicleConfig.SERVER.mixerMixTime.get())
                     {
                         FluidMixerRecipe recipe = this.currentRecipe;
                         this.tankFuelium.fill(recipe.getResult().createStack(), IFluidHandler.FluidAction.EXECUTE);

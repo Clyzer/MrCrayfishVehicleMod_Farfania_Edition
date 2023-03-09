@@ -3,7 +3,7 @@ package com.mrcrayfish.vehicle.client;
 import com.mrcrayfish.controllable.Controllable;
 import com.mrcrayfish.controllable.client.Buttons;
 import com.mrcrayfish.controllable.client.Controller;
-import com.mrcrayfish.vehicle.Config;
+import com.mrcrayfish.vehicle.VehicleConfig;
 import com.mrcrayfish.vehicle.client.audio.MovingSoundHorn;
 import com.mrcrayfish.vehicle.client.audio.MovingSoundHornRiding;
 import com.mrcrayfish.vehicle.client.audio.MovingSoundVehicle;
@@ -120,7 +120,7 @@ public class VehicleHelper
             Controller controller = Controllable.getController();
             if(controller != null)
             {
-                if(Config.CLIENT.useTriggers.get())
+                if(VehicleConfig.CLIENT.useTriggers.get())
                 {
                     if(controller.getRTriggerValue() != 0.0F && controller.getLTriggerValue() == 0.0F)
                     {
@@ -371,7 +371,7 @@ public class VehicleHelper
 
     public static float getPower(PoweredVehicleEntity vehicle)
     {
-        if(ClientHandler.isControllableLoaded() && Config.CLIENT.useTriggers.get())
+        if(ClientHandler.isControllableLoaded() && VehicleConfig.CLIENT.useTriggers.get())
         {
             Controller controller = Controllable.getController();
             if(controller != null)
@@ -394,7 +394,7 @@ public class VehicleHelper
     {
         if(passenger.equals(Minecraft.getInstance().player))
         {
-            return Config.CLIENT.rotateCameraWithVehicle.get();
+            return VehicleConfig.CLIENT.rotateCameraWithVehicle.get();
         }
         return false;
     }

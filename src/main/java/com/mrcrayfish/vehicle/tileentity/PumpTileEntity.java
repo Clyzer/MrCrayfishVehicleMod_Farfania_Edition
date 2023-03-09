@@ -2,7 +2,7 @@ package com.mrcrayfish.vehicle.tileentity;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import com.mrcrayfish.vehicle.Config;
+import com.mrcrayfish.vehicle.VehicleConfig;
 import com.mrcrayfish.vehicle.Reference;
 import com.mrcrayfish.vehicle.VehicleMod;
 import com.mrcrayfish.vehicle.block.FluidPipeBlock;
@@ -96,7 +96,7 @@ public class PumpTileEntity extends PipeTileEntity implements ITickableTileEntit
 
         IFluidHandler sourceHandler = source.get();
         int outputCount = handlers.size();
-        int remainingAmount = Math.min(sourceHandler.getFluidInTank(0).getAmount(), Config.SERVER.pumpTransferAmount.get());
+        int remainingAmount = Math.min(sourceHandler.getFluidInTank(0).getAmount(), VehicleConfig.SERVER.pumpTransferAmount.get());
         int splitAmount = remainingAmount / outputCount;
         if(splitAmount > 0)
         {

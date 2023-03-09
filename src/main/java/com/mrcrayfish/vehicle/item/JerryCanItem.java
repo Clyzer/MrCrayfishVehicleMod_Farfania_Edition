@@ -1,6 +1,6 @@
 package com.mrcrayfish.vehicle.item;
 
-import com.mrcrayfish.vehicle.Config;
+import com.mrcrayfish.vehicle.VehicleConfig;
 import com.mrcrayfish.vehicle.util.FluidUtils;
 import com.mrcrayfish.vehicle.util.RenderUtil;
 import net.minecraft.client.gui.screen.Screen;
@@ -130,7 +130,7 @@ public class JerryCanItem extends Item
 
     public int getFillRate()
     {
-        return Config.SERVER.jerryCanFillRate.get();
+        return VehicleConfig.SERVER.jerryCanFillRate.get();
     }
 
     @Override

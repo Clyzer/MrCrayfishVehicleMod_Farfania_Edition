@@ -1,7 +1,7 @@
 package com.mrcrayfish.vehicle.client.handler;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mrcrayfish.vehicle.Config;
+import com.mrcrayfish.vehicle.VehicleConfig;
 import com.mrcrayfish.vehicle.entity.PoweredVehicleEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
@@ -21,7 +21,7 @@ public class OverlayHandler
     @SubscribeEvent
     public void onRenderTick(TickEvent.RenderTickEvent event)
     {
-        if(!Config.CLIENT.enabledSpeedometer.get())
+        if(!VehicleConfig.CLIENT.enabledSpeedometer.get())
             return;
 
         if(event.phase != TickEvent.Phase.END)

@@ -5,7 +5,7 @@ import com.google.common.collect.Maps;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
-import com.mrcrayfish.vehicle.Config;
+import com.mrcrayfish.vehicle.VehicleConfig;
 import com.mrcrayfish.vehicle.VehicleMod;
 import com.mrcrayfish.vehicle.client.model.ISpecialModel;
 import com.mrcrayfish.vehicle.client.model.SpecialModels;
@@ -714,7 +714,7 @@ public class EntityRayTracer
             return;
         }
 
-        if(Config.CLIENT.reloadRayTracerEachTick.get())
+        if(VehicleConfig.CLIENT.reloadRayTracerEachTick.get())
         {
             this.entityRayTraceTransforms.keySet().forEach(type ->
             {
@@ -742,7 +742,7 @@ public class EntityRayTracer
         //boolean rightClick = Minecraft.getInstance().gameSettings.keyBindUseItem.getKeyCode() + 100 == event.getButton();
         boolean rightClick = event.getButton() == GLFW.GLFW_MOUSE_BUTTON_RIGHT;
         boolean leftClick = event.getButton() == GLFW.GLFW_MOUSE_BUTTON_LEFT;
-        if((!rightClick && (!Config.CLIENT.enabledLeftClick.get() || !leftClick)) || event.getAction() == GLFW.GLFW_RELEASE)
+        if((!rightClick && (!VehicleConfig.CLIENT.enabledLeftClick.get() || !leftClick)) || event.getAction() == GLFW.GLFW_RELEASE)
         {
             return;
         }
@@ -1040,7 +1040,7 @@ public class EntityRayTracer
      */
     public <T extends VehicleEntity & IEntityRayTraceable> void renderRayTraceElements(T entity, MatrixStack matrixStack, IRenderTypeBuffer renderTypeBuffer, float yaw)
     {
-        if(Config.CLIENT.renderOutlines.get())
+        if(VehicleConfig.CLIENT.renderOutlines.get())
         {
             matrixStack.pushPose();
             matrixStack.mulPose(Vector3f.YP.rotationDegrees(-yaw));

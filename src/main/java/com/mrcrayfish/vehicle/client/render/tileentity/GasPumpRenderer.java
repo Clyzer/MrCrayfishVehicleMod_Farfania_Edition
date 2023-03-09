@@ -2,7 +2,7 @@ package com.mrcrayfish.vehicle.client.render.tileentity;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
-import com.mrcrayfish.vehicle.Config;
+import com.mrcrayfish.vehicle.VehicleConfig;
 import com.mrcrayfish.vehicle.block.GasPumpBlock;
 import com.mrcrayfish.vehicle.client.EntityRayTracer;
 import com.mrcrayfish.vehicle.client.model.SpecialModels;
@@ -127,7 +127,7 @@ public class GasPumpRenderer extends TileEntityRenderer<GasPumpTileEntity>
 
         IVertexBuilder builder = buffer.getBuffer(RenderType.leash());
 
-        int segments = Config.CLIENT.hoseSegments.get();
+        int segments = VehicleConfig.CLIENT.hoseSegments.get();
         for(int i = 0; i < spline.getSize() - 1; i++)
         {
             for(int j = 0; j < segments; j++)
@@ -217,7 +217,7 @@ public class GasPumpRenderer extends TileEntityRenderer<GasPumpTileEntity>
         // Makes the hose turn to red when it's near the max hose distance
         if(gasPump.getFuelingEntity() != null)
         {
-            red = (float) (Math.sqrt(gasPump.getFuelingEntity().distanceToSqr(gasPump.getBlockPos().getX() + 0.5, gasPump.getBlockPos().getY() + 0.5, gasPump.getBlockPos().getZ() + 0.5)) / Config.SERVER.maxHoseDistance.get());
+            red = (float) (Math.sqrt(gasPump.getFuelingEntity().distanceToSqr(gasPump.getBlockPos().getX() + 0.5, gasPump.getBlockPos().getY() + 0.5, gasPump.getBlockPos().getZ() + 0.5)) / VehicleConfig.SERVER.maxHoseDistance.get());
             red = red * red * red * red * red * red;
             red = Math.max(red, 0.05F);
         }

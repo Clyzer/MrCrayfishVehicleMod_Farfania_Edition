@@ -1,6 +1,6 @@
 package com.mrcrayfish.vehicle.item;
 
-import com.mrcrayfish.vehicle.Config;
+import com.mrcrayfish.vehicle.VehicleConfig;
 import com.mrcrayfish.vehicle.util.RenderUtil;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.util.ITooltipFlag;
@@ -123,7 +123,7 @@ public class SprayCanItem extends Item implements IDyeable
         {
             return compound.getInt("Capacity");
         }
-        return Config.SERVER.sprayCanCapacity.get();
+        return VehicleConfig.SERVER.sprayCanCapacity.get();
     }
 
     public void refill(ItemStack stack)

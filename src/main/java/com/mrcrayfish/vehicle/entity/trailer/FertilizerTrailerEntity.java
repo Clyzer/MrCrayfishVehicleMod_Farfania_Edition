@@ -1,7 +1,7 @@
 package com.mrcrayfish.vehicle.entity.trailer;
 
 import com.google.common.collect.ImmutableList;
-import com.mrcrayfish.vehicle.Config;
+import com.mrcrayfish.vehicle.VehicleConfig;
 import com.mrcrayfish.vehicle.client.EntityRayTracer;
 import com.mrcrayfish.vehicle.common.inventory.IStorage;
 import com.mrcrayfish.vehicle.common.inventory.StorageInventory;
@@ -91,7 +91,7 @@ public class FertilizerTrailerEntity extends TrailerEntity implements IStorage
     {
         super.tick();
 
-        if(!level.isClientSide && Config.SERVER.trailerInventorySyncCooldown.get() > 0 && this.inventoryTimer++ == Config.SERVER.trailerInventorySyncCooldown.get())
+        if(!level.isClientSide && VehicleConfig.SERVER.trailerInventorySyncCooldown.get() > 0 && this.inventoryTimer++ == VehicleConfig.SERVER.trailerInventorySyncCooldown.get())
         {
             this.inventoryTimer = 0;
             PacketHandler.instance.send(PacketDistributor.TRACKING_ENTITY.with(() -> this), new MessageSyncInventory(this.getId(), this.inventory));

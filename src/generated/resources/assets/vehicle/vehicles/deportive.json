@@ -6,8 +6,8 @@
     },
     "axles": {
         "offsetToGround": -1.7,
-        "lengthToFront": 12.0,
-        "lengthToRear": -12.0
+        "lengthToFront": 17.0,
+        "lengthToRear": -18.0
     },
     "display": {
         "held": [ 3.0, 1.0, 0.0 ],
@@ -24,7 +24,7 @@
             "rotation": [ 0.0, -90, 0.0 ],
             "scale": 0.25
         },
-        "towBar": [ 0.0, 0.0, -31.5 ]
+        "towBar": [ -6.0, 0.0, -33 ]
     },
     "wheels": [
         {

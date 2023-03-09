@@ -1,6 +1,6 @@
 package com.mrcrayfish.vehicle.tileentity;
 
-import com.mrcrayfish.vehicle.Config;
+import com.mrcrayfish.vehicle.VehicleConfig;
 import com.mrcrayfish.vehicle.block.FluidExtractorBlock;
 import com.mrcrayfish.vehicle.block.FluidMixerBlock;
 import com.mrcrayfish.vehicle.crafting.FluidExtractorRecipe;
@@ -117,8 +117,8 @@ public class FluidExtractorTileEntity extends TileFluidHandlerSynced implements 
 
     public FluidExtractorTileEntity()
     {
-        super(ModTileEntities.FLUID_EXTRACTOR.get(), Config.SERVER.extractorCapacity.get(), stack -> true);
-        this.capacity = Config.SERVER.extractorCapacity.get();
+        super(ModTileEntities.FLUID_EXTRACTOR.get(), VehicleConfig.SERVER.extractorCapacity.get(), stack -> true);
+        this.capacity = VehicleConfig.SERVER.extractorCapacity.get();
     }
 
     @Override
@@ -145,7 +145,7 @@ public class FluidExtractorTileEntity extends TileFluidHandlerSynced implements 
             {
                 this.setExtracting(true);
 
-                if(this.extractionProgress++ == Config.SERVER.extractorExtractTime.get())
+                if(this.extractionProgress++ == VehicleConfig.SERVER.extractorExtractTime.get())
                 {
                     this.tank.fill(this.currentRecipe.getResult().createStack(), IFluidHandler.FluidAction.EXECUTE);
                     this.extractionProgress = 0;

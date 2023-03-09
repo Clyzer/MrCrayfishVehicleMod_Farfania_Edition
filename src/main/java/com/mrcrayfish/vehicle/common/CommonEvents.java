@@ -2,7 +2,7 @@ package com.mrcrayfish.vehicle.common;
 
 import com.google.common.collect.ImmutableList;
 import com.mrcrayfish.obfuscate.common.data.SyncedPlayerData;
-import com.mrcrayfish.vehicle.Config;
+import com.mrcrayfish.vehicle.VehicleConfig;
 import com.mrcrayfish.vehicle.Reference;
 import com.mrcrayfish.vehicle.common.entity.HeldVehicleDataHandler;
 import com.mrcrayfish.vehicle.entity.EntityJack;
@@ -127,7 +127,7 @@ public class CommonEvents
 
     public static boolean pickUpVehicle(World world, PlayerEntity player, Hand hand, Entity targetEntity)
     {
-        if(hand == Hand.MAIN_HAND && !world.isClientSide && player.isCrouching() && !player.isSpectator() && Config.SERVER.pickUpVehicles.get())
+        if(hand == Hand.MAIN_HAND && !world.isClientSide && player.isCrouching() && !player.isSpectator() && VehicleConfig.SERVER.pickUpVehicles.get())
         {
             if(!HeldVehicleDataHandler.isHoldingVehicle(player))
             {

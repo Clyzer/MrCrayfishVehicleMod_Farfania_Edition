@@ -6,7 +6,7 @@ import com.mrcrayfish.controllable.client.Buttons;
 import com.mrcrayfish.controllable.event.AvailableActionsEvent;
 import com.mrcrayfish.controllable.event.ControllerEvent;
 import com.mrcrayfish.controllable.event.RenderPlayerPreviewEvent;
-import com.mrcrayfish.vehicle.Config;
+import com.mrcrayfish.vehicle.VehicleConfig;
 import com.mrcrayfish.vehicle.client.ClientHandler;
 import com.mrcrayfish.vehicle.entity.HelicopterEntity;
 import com.mrcrayfish.vehicle.entity.LandVehicleEntity;
@@ -80,7 +80,7 @@ public class ControllerHandler
                     break;
                 case Buttons.RIGHT_TRIGGER:
                 case Buttons.LEFT_TRIGGER:
-                    if(Config.CLIENT.useTriggers.get() && player.getVehicle() instanceof VehicleEntity)
+                    if(VehicleConfig.CLIENT.useTriggers.get() && player.getVehicle() instanceof VehicleEntity)
                     {
                         event.setCanceled(true);
                     }
@@ -119,7 +119,7 @@ public class ControllerHandler
 
             availableActions.put(Buttons.LEFT_THUMB_STICK, new Action("Exit Vehicle", Action.Side.LEFT));
 
-            if(Config.CLIENT.useTriggers.get())
+            if(VehicleConfig.CLIENT.useTriggers.get())
             {
                 availableActions.put(Buttons.RIGHT_TRIGGER, new Action("Accelerate", Action.Side.RIGHT));
             }
@@ -132,7 +132,7 @@ public class ControllerHandler
 
             if(vehicle instanceof PoweredVehicleEntity)
             {
-                int button = Config.CLIENT.useTriggers.get() ? Buttons.LEFT_TRIGGER : Buttons.B;
+                int button = VehicleConfig.CLIENT.useTriggers.get() ? Buttons.LEFT_TRIGGER : Buttons.B;
                 if(((PoweredVehicleEntity) vehicle).getSpeed() > 0.05F)
                 {
                     availableActions.put(button, new Action("Brake", Action.Side.RIGHT));

@@ -12,11 +12,13 @@ buildscript {
     }
 }
 apply plugin: 'net.minecraftforge.gradle'
+
+apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
 version = "0.45.2-1.16.5"
 group = "com.mrcrayfish"
-archivesBaseName = "vehicle-mod"
+archivesBaseName = "vehicle"
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(8)
 
@@ -30,7 +32,7 @@ minecraft {
             workingDirectory project.file('run')
             property 'mixin.env.remapRefMap', 'true'
             property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
-            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+            property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'debug'
             mods {
                 vehicle {
@@ -43,7 +45,7 @@ minecraft {
             workingDirectory project.file('run')
             property 'mixin.env.remapRefMap', 'true'
             property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
-            property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+            property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'debug'
             mods {
                 vehicle {
@@ -103,20 +105,19 @@ jar {
     }
 }
 
-def reobfFile = file("$buildDir/reobfJar/output.jar")
-def reobfArtifact = artifacts.add('default', reobfFile) {
-    type 'jar'
-    builtBy 'reobfJar'
-}
+jar.finalizedBy('reobfJar')
+
+publish.dependsOn('reobfJar')
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            artifact reobfArtifact
+            artifact jar
         }
     }
     repositories {
         maven {
-            url "file:///X:/localmaven/mcmods"
+            url "file:///${project.projectDir}/mcmodsrepo"
         }
     }
 }

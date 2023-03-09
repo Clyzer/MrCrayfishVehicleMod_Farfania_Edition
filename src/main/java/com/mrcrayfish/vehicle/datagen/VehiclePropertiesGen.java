@@ -637,7 +637,7 @@ public class VehiclePropertiesGen extends VehiclePropertiesProvider
                 .setFuelPortPosition(PartPosition.create(-13.0, 8.7, -15.3, 0.0, -90, 0.0, 0.25))
                 .setDisplayPosition(PartPosition.create(1.35F))
                 .setHeldOffset(3.0, 1.0, 0.0)
-                .setTowBarPosition(0.0, 0.0, -31.5)
+                .setTowBarPosition(-6.0, 0.0, -33)
                 .addWheel(Wheel.builder()
                         .setSide(Wheel.Side.LEFT)
                         .setPosition(Wheel.Position.FRONT)

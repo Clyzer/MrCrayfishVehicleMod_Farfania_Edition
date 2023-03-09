@@ -3,7 +3,7 @@ package com.mrcrayfish.vehicle.client.screen;
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mrcrayfish.vehicle.Config;
+import com.mrcrayfish.vehicle.VehicleConfig;
 import com.mrcrayfish.vehicle.init.ModFluids;
 import com.mrcrayfish.vehicle.inventory.container.FluidMixerContainer;
 import com.mrcrayfish.vehicle.tileentity.FluidMixerTileEntity;
@@ -139,7 +139,7 @@ public class FluidMixerScreen extends ContainerScreen<FluidMixerContainer>
                     | ((((greenBlaze + greenSap) / 2) & 255) << 8) | ((((blueBlaze + blueSap) / 2) & 255));
             int statrColor = (130 << 24) | statrColorRGB;
             int fluidColor = (130 << 24) | FluidUtils.getAverageFluidColor(ModFluids.FUELIUM.get()); //TODO change to recipe
-            double extractionPercentage = this.fluidMixerTileEntity.getExtractionProgress() / (double) Config.SERVER.mixerMixTime.get();
+            double extractionPercentage = this.fluidMixerTileEntity.getExtractionProgress() / (double) VehicleConfig.SERVER.mixerMixTime.get();
 
             double lenghtItem = 76;
             double lenghtHorizontal = 12;

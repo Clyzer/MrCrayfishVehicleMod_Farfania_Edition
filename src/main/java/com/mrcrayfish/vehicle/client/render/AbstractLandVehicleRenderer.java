@@ -2,7 +2,7 @@ package com.mrcrayfish.vehicle.client.render;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mrcrayfish.vehicle.Config;
+import com.mrcrayfish.vehicle.VehicleConfig;
 import com.mrcrayfish.vehicle.client.EntityRayTracer;
 import com.mrcrayfish.vehicle.common.entity.PartPosition;
 import com.mrcrayfish.vehicle.entity.LandVehicleEntity;
@@ -116,7 +116,7 @@ public abstract class AbstractLandVehicleRenderer<T extends LandVehicleEntity & 
         if(vehicle == null)
             return;
 
-        if(Config.CLIENT.renderSteeringDebug.get())
+        if(VehicleConfig.CLIENT.renderSteeringDebug.get())
         {
             if(properties.getFrontAxelVec() != null && properties.getRearAxelVec() != null)
             {

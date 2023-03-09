@@ -1,7 +1,7 @@
 package com.mrcrayfish.vehicle.entity;
 
 import com.mrcrayfish.obfuscate.common.data.SyncedPlayerData;
-import com.mrcrayfish.vehicle.Config;
+import com.mrcrayfish.vehicle.VehicleConfig;
 import com.mrcrayfish.vehicle.block.VehicleCrateBlock;
 import com.mrcrayfish.vehicle.client.VehicleHelper;
 import com.mrcrayfish.vehicle.client.model.ISpecialModel;
@@ -174,7 +174,7 @@ public abstract class PoweredVehicleEntity extends VehicleEntity implements IInv
         this.entityData.define(MAX_TURN_ANGLE, 35);
         this.entityData.define(ACCELERATION_DIRECTION, AccelerationDirection.NONE.ordinal());
         this.entityData.define(HORN, false);
-        this.entityData.define(REQUIRES_FUEL, Config.SERVER.fuelEnabled.get());
+        this.entityData.define(REQUIRES_FUEL, VehicleConfig.SERVER.fuelEnabled.get());
         this.entityData.define(CURRENT_FUEL, 0F);
         this.entityData.define(FUEL_CAPACITY, 15000F);
         this.entityData.define(NEEDS_KEY, false);
@@ -259,7 +259,7 @@ public abstract class PoweredVehicleEntity extends VehicleEntity implements IInv
             GasPumpTankTileEntity gasPumpTank = (GasPumpTankTileEntity) tileEntity;
             FluidTank tank = gasPumpTank.getFluidTank();
             FluidStack stack = tank.getFluid();
-            if(stack.isEmpty() || !Config.SERVER.validFuels.get().contains(stack.getFluid().getRegistryName().toString()))
+            if(stack.isEmpty() || !VehicleConfig.SERVER.validFuels.get().contains(stack.getFluid().getRegistryName().toString()))
                 return;
 
             stack = tank.drain(200, IFluidHandler.FluidAction.EXECUTE);
@@ -285,7 +285,7 @@ public abstract class PoweredVehicleEntity extends VehicleEntity implements IInv
 
         IFluidHandlerItem handler = optional.get();
         FluidStack fluidStack = handler.getFluidInTank(0);
-        if(fluidStack.isEmpty() || !Config.SERVER.validFuels.get().contains(fluidStack.getFluid().getRegistryName().toString()))
+        if(fluidStack.isEmpty() || !VehicleConfig.SERVER.validFuels.get().contains(fluidStack.getFluid().getRegistryName().toString()))
             return;
 
         int transferAmount = Math.min(handler.getFluidInTank(0).getAmount(), jerryCan.getFillRate());
@@ -474,7 +474,7 @@ public abstract class PoweredVehicleEntity extends VehicleEntity implements IInv
             float currentSpeed = Math.abs(Math.min(this.getSpeed(), this.getMaxSpeed()));
             float normalSpeed = Math.max(0.05F, currentSpeed / this.getMaxSpeed());
             float currentFuel = this.getCurrentFuel();
-            currentFuel -= this.fuelConsumption * normalSpeed * Config.SERVER.fuelConsumptionFactor.get();
+            currentFuel -= this.fuelConsumption * normalSpeed * VehicleConfig.SERVER.fuelConsumptionFactor.get();
             if(currentFuel < 0F) currentFuel = 0F;
             this.setCurrentFuel(currentFuel);
         }
@@ -1021,12 +1021,12 @@ public abstract class PoweredVehicleEntity extends VehicleEntity implements IInv
 
     public boolean requiresFuel()
     {
-        return Config.SERVER.fuelEnabled.get() && this.entityData.get(REQUIRES_FUEL);
+        return VehicleConfig.SERVER.fuelEnabled.get() && this.entityData.get(REQUIRES_FUEL);
     }
 
     public void setRequiresFuel(boolean requiresFuel)
     {
-        this.entityData.set(REQUIRES_FUEL, Config.SERVER.fuelEnabled.get() && requiresFuel);
+        this.entityData.set(REQUIRES_FUEL, VehicleConfig.SERVER.fuelEnabled.get() && requiresFuel);
     }
 
     public boolean isFueled()

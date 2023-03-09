@@ -1,7 +1,7 @@
 package com.mrcrayfish.vehicle.entity;
 
 import com.mrcrayfish.obfuscate.common.data.SyncedPlayerData;
-import com.mrcrayfish.vehicle.Config;
+import com.mrcrayfish.vehicle.VehicleConfig;
 import com.mrcrayfish.vehicle.block.VehicleCrateBlock;
 import com.mrcrayfish.vehicle.client.EntityRayTracer;
 import com.mrcrayfish.vehicle.common.Seat;
@@ -294,7 +294,7 @@ public abstract class VehicleEntity extends Entity implements IEntityAdditionalS
                      * is the fix. */
                     this.entityData.set(TRAILER, trailer.getId());
                     this.trailer.getEntityData().set(TrailerEntity.PULLING_ENTITY, this.getId());
-                    this.searchDelay = Config.SERVER.trailerSyncCooldown.get();
+                    this.searchDelay = VehicleConfig.SERVER.trailerSyncCooldown.get();
                 }
                 else
                 {
@@ -374,7 +374,7 @@ public abstract class VehicleEntity extends Entity implements IEntityAdditionalS
             }
             else
             {
-                if(Config.SERVER.vehicleDamage.get())
+                if(VehicleConfig.SERVER.vehicleDamage.get())
                 {
                     this.setTimeSinceHit(10);
                     this.setHealth(this.getHealth() - amount);
@@ -398,7 +398,7 @@ public abstract class VehicleEntity extends Entity implements IEntityAdditionalS
     @Override
     public boolean causeFallDamage(float distance, float damageMultiplier)
     {
-        if(Config.SERVER.vehicleDamage.get() && distance >= 4F && this.getDeltaMovement().y() < -1.0F)
+        if(VehicleConfig.SERVER.vehicleDamage.get() && distance >= 4F && this.getDeltaMovement().y() < -1.0F)
         {
             float damage = distance / 2F;
             this.hurt(DamageSource.FALL, damage);

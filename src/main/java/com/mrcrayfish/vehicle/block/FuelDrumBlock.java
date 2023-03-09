@@ -1,6 +1,6 @@
 package com.mrcrayfish.vehicle.block;
 
-import com.mrcrayfish.vehicle.Config;
+import com.mrcrayfish.vehicle.VehicleConfig;
 import com.mrcrayfish.vehicle.init.ModBlocks;
 import com.mrcrayfish.vehicle.tileentity.FuelDrumTileEntity;
 import com.mrcrayfish.vehicle.util.RenderUtil;
@@ -159,7 +159,7 @@ public class FuelDrumBlock extends Block
 
     public int getCapacity()
     {
-        return Config.SERVER.fuelDrumCapacity.get();
+        return VehicleConfig.SERVER.fuelDrumCapacity.get();
     }
 
     @Nullable

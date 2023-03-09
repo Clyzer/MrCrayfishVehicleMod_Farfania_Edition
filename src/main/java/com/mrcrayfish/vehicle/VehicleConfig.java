@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Author: MrCrayfish
  */
-public class Config
+public class VehicleConfig
 {
     public static class Client
     {
@@ -156,14 +156,14 @@ public class Config
     }
 
     static final ForgeConfigSpec clientSpec;
-    public static final Config.Client CLIENT;
+    public static final VehicleConfig.Client CLIENT;
 
     static final ForgeConfigSpec serverSpec;
     public static final Server SERVER;
 
     static
     {
-        final Pair<Client, ForgeConfigSpec> clientSpecPair = new ForgeConfigSpec.Builder().configure(Config.Client::new);
+        final Pair<Client, ForgeConfigSpec> clientSpecPair = new ForgeConfigSpec.Builder().configure(VehicleConfig.Client::new);
         clientSpec = clientSpecPair.getRight();
         CLIENT = clientSpecPair.getLeft();
 
