@@ -3,21 +3,21 @@ package com.mrcrayfish.vehicle.network.message;
 import com.mrcrayfish.vehicle.common.inventory.IAttachableChest;
 import com.mrcrayfish.vehicle.common.inventory.IStorage;
 import com.mrcrayfish.vehicle.init.ModItems;
-import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.PacketBuffer;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import net.minecraftforge.common.ForgeMod;
+import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.fml.network.NetworkHooks;
+
+import java.util.function.Supplier;
 
 /**
  * Author: MrCrayfish
  */
-public class MessageOpenStorage implements IMessage, IMessageHandler<MessageOpenStorage, IMessage>
+public class MessageOpenStorage implements IMessage<MessageOpenStorage>
 {
     private int entityId;
 
@@ -29,53 +29,58 @@ public class MessageOpenStorage implements IMessage, IMessageHandler<MessageOpen
     }
 
     @Override
-    public void toBytes(ByteBuf buf)
+    public void encode(MessageOpenStorage message, PacketBuffer buffer)
     {
-        buf.writeInt(entityId);
+        buffer.writeInt(message.entityId);
     }
 
     @Override
-    public void fromBytes(ByteBuf buf)
+    public MessageOpenStorage decode(PacketBuffer buffer)
     {
-        entityId = buf.readInt();
+        return new MessageOpenStorage(buffer.readInt());
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
-    public IMessage onMessage(MessageOpenStorage message, MessageContext ctx)
+    public void handle(MessageOpenStorage message, Supplier<NetworkEvent.Context> supplier)
     {
-        FMLCommonHandler.instance().getWorldThread(ctx.netHandler).addScheduledTask(() ->
+        supplier.get().enqueueWork(() ->
         {
-            EntityPlayerMP player = ctx.getServerHandler().player;
-            World world = player.world;
-            Entity targetEntity = world.getEntityByID(message.entityId);
-            if(targetEntity instanceof IStorage && !player.isSneaking())
+            ServerPlayerEntity player = supplier.get().getSender();
+            if(player != null)
             {
-                float reachDistance = (float) player.getEntityAttribute(EntityPlayer.REACH_DISTANCE).getAttributeValue();
-                if(player.getDistance(targetEntity) < reachDistance)
+                World world = player.level;
+                Entity targetEntity = world.getEntity(message.entityId);
+                if(targetEntity instanceof IStorage)
                 {
-                    if(targetEntity instanceof IAttachableChest)
+                    IStorage storage = (IStorage) targetEntity;
+                    float reachDistance = (float) player.getAttribute(ForgeMod.REACH_DISTANCE.get()).getValue();
+                    if(player.distanceTo(targetEntity) < reachDistance)
                     {
-                        IAttachableChest attachableChest = (IAttachableChest) targetEntity;
-                        if(attachableChest.hasChest())
+                        if(targetEntity instanceof IAttachableChest)
                         {
-                            ItemStack stack = player.inventory.getCurrentItem();
-                            if(stack.getItem() == ModItems.WRENCH)
+                            IAttachableChest attachableChest = (IAttachableChest) targetEntity;
+                            if(attachableChest.hasChest())
                             {
-                                ((IAttachableChest) targetEntity).removeChest();
-                            }
-                            else
-                            {
-                                attachableChest.getInventory().openGui(player, targetEntity);
+                                ItemStack stack = player.inventory.getSelected();
+                                if(stack.getItem() == ModItems.WRENCH.get())
+                                {
+                                    ((IAttachableChest) targetEntity).removeChest();
+                                }
+                                else
+                                {
+                                    NetworkHooks.openGui(player, storage.getStorageContainerProvider(), buffer -> buffer.writeVarInt(message.entityId));
+                                }
                             }
                         }
-                    }
-                    else
-                    {
-                        ((IStorage) targetEntity).getInventory().openGui(player, targetEntity);
+                        else
+                        {
+                            NetworkHooks.openGui(player, storage.getStorageContainerProvider(), buffer -> buffer.writeVarInt(message.entityId));
+                        }
                     }
                 }
             }
         });
-        return null;
+        supplier.get().setPacketHandled(true);
     }
 }

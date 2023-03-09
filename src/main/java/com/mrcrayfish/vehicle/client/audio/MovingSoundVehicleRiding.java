@@ -1,51 +1,52 @@
 package com.mrcrayfish.vehicle.client.audio;
 
-import com.mrcrayfish.vehicle.entity.EntityPoweredVehicle;
+import com.mrcrayfish.vehicle.entity.PoweredVehicleEntity;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.audio.ISound;
-import net.minecraft.client.audio.MovingSound;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.client.audio.TickableSound;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.SoundCategory;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.lang.ref.WeakReference;
 
 /**
  * Author: MrCrayfish
  */
-@SideOnly(Side.CLIENT)
-public class MovingSoundVehicleRiding extends MovingSound
+@OnlyIn(Dist.CLIENT)
+public class MovingSoundVehicleRiding extends TickableSound
 {
-    private final WeakReference<EntityPlayer> playerRef;
-    private final WeakReference<EntityPoweredVehicle> vehicleRef;
+    private final WeakReference<PlayerEntity> playerRef;
+    private final WeakReference<PoweredVehicleEntity> vehicleRef;
 
-    public MovingSoundVehicleRiding(EntityPlayer player, EntityPoweredVehicle vehicle)
+    public MovingSoundVehicleRiding(PlayerEntity player, PoweredVehicleEntity vehicle)
     {
-        super(vehicle.getRidingSound(), SoundCategory.NEUTRAL);
+        super(vehicle.getEngineSound(), SoundCategory.NEUTRAL);
         this.playerRef = new WeakReference<>(player);
         this.vehicleRef = new WeakReference<>(vehicle);
-        this.attenuationType = ISound.AttenuationType.NONE;
-        this.repeat = true;
-        this.repeatDelay = 0;
+        this.attenuation = AttenuationType.NONE;
+        this.relative = true;
+        this.looping = true;
+        this.delay = 0;
         this.volume = 0.001F;
     }
 
     @Override
-    public void update()
+    public void tick()
     {
-        EntityPoweredVehicle vehicle = this.vehicleRef.get();
-        EntityPlayer player = this.playerRef.get();
+        PoweredVehicleEntity vehicle = this.vehicleRef.get();
+        PlayerEntity player = this.playerRef.get();
         if(vehicle == null || player == null)
         {
-            this.donePlaying = true;
+            this.stop();
             return;
         }
-        if(vehicle.isDead || !vehicle.equals(player.getRidingEntity()) || !player.equals(Minecraft.getMinecraft().player) || vehicle.getPassengers().size() == 0)
+        if(!vehicle.isAlive() || !vehicle.equals(player.getVehicle()) || !player.equals(Minecraft.getInstance().player) || vehicle.getPassengers().size() == 0)
         {
-            this.donePlaying = true;
+            this.stop();
+            return;
         }
-        this.volume = vehicle.getControllingPassenger() != null ? 1.0F : 0.0F;
+        this.volume = vehicle.getControllingPassenger() != null && vehicle.isEnginePowered() ? 1.0F : 0.0F;
         this.pitch = vehicle.getMinEnginePitch() + (vehicle.getMaxEnginePitch() - vehicle.getMinEnginePitch()) * Math.abs(vehicle.getActualSpeed());
     }
 }

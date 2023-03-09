@@ -1,27 +1,40 @@
 package com.mrcrayfish.vehicle.util;
 
-import com.mrcrayfish.vehicle.entity.EntityPoweredVehicle;
-import com.mrcrayfish.vehicle.init.ModItems;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
+import com.mojang.blaze3d.vertex.MatrixApplyingVertexBuilder;
+import com.mrcrayfish.vehicle.common.ItemLookup;
+import com.mrcrayfish.vehicle.entity.PoweredVehicleEntity;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.renderer.Atlases;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.EntityRenderer;
-import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.ItemRenderer;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.RenderTypeLookup;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.IBakedModel;
-import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
-import net.minecraft.client.renderer.block.model.ModelManager;
-import net.minecraft.client.renderer.texture.TextureMap;
-import net.minecraft.client.renderer.texture.TextureUtil;
+import net.minecraft.client.renderer.model.BakedQuad;
+import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.client.renderer.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.model.ModelBakery;
+import net.minecraft.client.renderer.model.ModelResourceLocation;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumFacing;
-import net.minecraftforge.client.model.pipeline.LightUtil;
+import net.minecraft.item.Items;
+import net.minecraft.util.Direction;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.ITextProperties;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.Style;
+import net.minecraft.util.text.TextFormatting;
 import org.lwjgl.opengl.GL11;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Objects;
+import java.util.Random;
+import java.util.stream.Collectors;
 
 /**
  * Author: MrCrayfish
@@ -35,244 +48,160 @@ public class RenderUtil
     public static void drawTexturedModalRect(double x, double y, int textureX, int textureY, double width, double height)
     {
         Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuffer();
+        BufferBuilder bufferbuilder = tessellator.getBuilder();
         bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX);
-        bufferbuilder.pos(x, y + height, 0).tex((double) ((float) textureX * 0.00390625F), (double) ((float) (textureY + height) * 0.00390625F)).endVertex();
-        bufferbuilder.pos(x + width, y + height, 0).tex((double) ((float) (textureX + width) * 0.00390625F), (double) ((float) (textureY + height) * 0.00390625F)).endVertex();
-        bufferbuilder.pos(x + width, y, 0).tex((double) ((float) (textureX + width) * 0.00390625F), (double) ((float) textureY * 0.00390625F)).endVertex();
-        bufferbuilder.pos(x + 0, y, 0).tex((double) ((float) textureX * 0.00390625F), (double) ((float) textureY * 0.00390625F)).endVertex();
-        tessellator.draw();
+        bufferbuilder.vertex(x, y + height, 0).uv(((float) textureX * 0.00390625F), ((float) (textureY + height) * 0.00390625F)).endVertex();
+        bufferbuilder.vertex(x + width, y + height, 0).uv(((float) (textureX + width) * 0.00390625F), ((float) (textureY + height) * 0.00390625F)).endVertex();
+        bufferbuilder.vertex(x + width, y, 0).uv(((float) (textureX + width) * 0.00390625F), ((float) textureY * 0.00390625F)).endVertex();
+        bufferbuilder.vertex(x + 0, y, 0).uv(((float) textureX * 0.00390625F), ((float) textureY * 0.00390625F)).endVertex();
+        tessellator.end();
     }
 
     /**
      * Draws a rectangle with a horizontal gradient between the specified colors (ARGB format).
      */
-    public static void drawGradientRectHorizontal(int left, int top, int right, int bottom, int leftColor, int rightColor, double zLevel)
+    public static void drawGradientRectHorizontal(int left, int top, int right, int bottom, int leftColor, int rightColor)
     {
-        float f = (float) (leftColor >> 24 & 255) / 255.0F;
-        float f1 = (float) (leftColor >> 16 & 255) / 255.0F;
-        float f2 = (float) (leftColor >> 8 & 255) / 255.0F;
-        float f3 = (float) (leftColor & 255) / 255.0F;
-        float f4 = (float) (rightColor >> 24 & 255) / 255.0F;
-        float f5 = (float) (rightColor >> 16 & 255) / 255.0F;
-        float f6 = (float) (rightColor >> 8 & 255) / 255.0F;
-        float f7 = (float) (rightColor & 255) / 255.0F;
-        GlStateManager.disableTexture2D();
-        GlStateManager.enableBlend();
-        GlStateManager.disableAlpha();
-        GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-        GlStateManager.shadeModel(7425);
+        float redStart = (float)(leftColor >> 24 & 255) / 255.0F;
+        float greenStart = (float)(leftColor >> 16 & 255) / 255.0F;
+        float blueStart = (float)(leftColor >> 8 & 255) / 255.0F;
+        float alphaStart = (float)(leftColor & 255) / 255.0F;
+        float redEnd = (float)(rightColor >> 24 & 255) / 255.0F;
+        float greenEnd = (float)(rightColor >> 16 & 255) / 255.0F;
+        float blueEnd = (float)(rightColor >> 8 & 255) / 255.0F;
+        float alphaEnd = (float)(rightColor & 255) / 255.0F;
+        RenderSystem.disableTexture();
+        RenderSystem.enableBlend();
+        RenderSystem.disableAlphaTest();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.shadeModel(7425);
         Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuffer();
-        bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR);
-        bufferbuilder.pos((double) right, (double) top, zLevel).color(f5, f6, f7, f4).endVertex();
-        bufferbuilder.pos((double) left, (double) top, zLevel).color(f1, f2, f3, f).endVertex();
-        bufferbuilder.pos((double) left, (double) bottom, zLevel).color(f1, f2, f3, f).endVertex();
-        bufferbuilder.pos((double) right, (double) bottom, zLevel).color(f5, f6, f7, f4).endVertex();
-        tessellator.draw();
-        GlStateManager.shadeModel(7424);
-        GlStateManager.disableBlend();
-        GlStateManager.enableAlpha();
-        GlStateManager.enableTexture2D();
+        BufferBuilder bufferbuilder = tessellator.getBuilder();
+        bufferbuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+        bufferbuilder.vertex((double)right, (double)top, 0).color(greenEnd, blueEnd, alphaEnd, redEnd).endVertex();
+        bufferbuilder.vertex((double)left, (double)top, 0).color(greenStart, blueStart, alphaStart, redStart).endVertex();
+        bufferbuilder.vertex((double)left, (double)bottom, 0).color(greenStart, blueStart, alphaStart, redStart).endVertex();
+        bufferbuilder.vertex((double)right, (double)bottom, 0).color(greenEnd, blueEnd, alphaEnd, redEnd).endVertex();
+        tessellator.end();
+        RenderSystem.shadeModel(7424);
+        RenderSystem.disableBlend();
+        RenderSystem.enableAlphaTest();
+        RenderSystem.enableTexture();
     }
 
-    public static void renderItemModel(ItemStack stack, IBakedModel model, ItemCameraTransforms.TransformType transform)
+    public static void scissor(int x, int y, int width, int height) //TODO might need fixing. I believe I rewrote this in a another mod
+    {
+        Minecraft mc = Minecraft.getInstance();
+        int scale = (int) mc.getWindow().getGuiScale();
+        GL11.glScissor(x * scale, mc.getWindow().getScreenHeight() - y * scale - height * scale, Math.max(0, width * scale), Math.max(0, height * scale));
+    }
+
+    public static IBakedModel getModel(ItemStack stack)
+    {
+        return Minecraft.getInstance().getItemRenderer().getItemModelShaper().getItemModel(stack);
+    }
+
+    public static void renderColoredModel(IBakedModel model, ItemCameraTransforms.TransformType transformType, boolean leftHanded, MatrixStack matrixStack, IRenderTypeBuffer renderTypeBuffer, int color, int lightTexture, int overlayTexture)
+    {
+        matrixStack.pushPose();
+        net.minecraftforge.client.ForgeHooksClient.handleCameraTransforms(matrixStack, model, transformType, leftHanded);
+        matrixStack.translate(-0.5, -0.5, -0.5);
+        if(!model.isCustomRenderer())
+        {
+            IVertexBuilder vertexBuilder = renderTypeBuffer.getBuffer(Atlases.cutoutBlockSheet());
+            renderModel(model, ItemStack.EMPTY, color, lightTexture, overlayTexture, matrixStack, vertexBuilder);
+        }
+        matrixStack.popPose();
+    }
+
+    public static void renderDamagedVehicleModel(IBakedModel model, ItemCameraTransforms.TransformType transformType, boolean leftHanded, MatrixStack matrixStack, int stage, int color, int lightTexture, int overlayTexture)
+    {
+        matrixStack.pushPose();
+        net.minecraftforge.client.ForgeHooksClient.handleCameraTransforms(matrixStack, model, transformType, leftHanded);
+        matrixStack.translate(-0.5, -0.5, -0.5);
+        if(!model.isCustomRenderer())
+        {
+            Minecraft mc = Minecraft.getInstance();
+            MatrixStack.Entry entry = matrixStack.last();
+            IVertexBuilder vertexBuilder = new MatrixApplyingVertexBuilder(mc.renderBuffers().crumblingBufferSource().getBuffer(ModelBakery.DESTROY_TYPES.get(stage)), entry.pose(), entry.normal());
+            renderModel(model, ItemStack.EMPTY, color, lightTexture, overlayTexture, matrixStack, vertexBuilder);
+        }
+        matrixStack.popPose();
+    }
+
+    public static void renderModel(ItemStack stack, ItemCameraTransforms.TransformType transformType, boolean leftHanded, MatrixStack matrixStack, IRenderTypeBuffer renderTypeBuffer, int lightTexture, int overlayTexture, IBakedModel model)
     {
         if(!stack.isEmpty())
         {
-            Minecraft.getMinecraft().getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-            Minecraft.getMinecraft().getTextureManager().getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).setBlurMipmap(false, false);
-            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-            GlStateManager.enableRescaleNormal();
-            GlStateManager.alphaFunc(516, 0.1F);
-            GlStateManager.enableBlend();
-            GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-            GlStateManager.pushMatrix();
-            model = net.minecraftforge.client.ForgeHooksClient.handleCameraTransforms(model, transform, false);
-            Minecraft.getMinecraft().getRenderItem().renderItem(stack, model);
-            GlStateManager.cullFace(GlStateManager.CullFace.BACK);
-            GlStateManager.popMatrix();
-            GlStateManager.disableRescaleNormal();
-            GlStateManager.disableBlend();
-            Minecraft.getMinecraft().getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-            Minecraft.getMinecraft().getTextureManager().getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).restoreLastBlurMipmap();
+            matrixStack.pushPose();
+            boolean isGui = transformType == ItemCameraTransforms.TransformType.GUI;
+            boolean tridentFlag = isGui || transformType == ItemCameraTransforms.TransformType.GROUND || transformType == ItemCameraTransforms.TransformType.FIXED;
+            if(stack.getItem() == Items.TRIDENT && tridentFlag)
+            {
+                model = Minecraft.getInstance().getModelManager().getModel(new ModelResourceLocation("minecraft:trident#inventory"));
+            }
+
+            model = net.minecraftforge.client.ForgeHooksClient.handleCameraTransforms(matrixStack, model, transformType, leftHanded);
+            matrixStack.translate(-0.5, -0.5, -0.5);
+            if(!model.isCustomRenderer() && (stack.getItem() != Items.TRIDENT || tridentFlag))
+            {
+                RenderType renderType = RenderTypeLookup.getRenderType(stack, false); //TODO test what this flag does
+                if(isGui && Objects.equals(renderType, Atlases.translucentCullBlockSheet()))
+                {
+                    renderType = Atlases.translucentCullBlockSheet();
+                }
+                IVertexBuilder vertexBuilder = ItemRenderer.getFoilBuffer(renderTypeBuffer, renderType, true, stack.hasFoil());
+                renderModel(model, stack, -1, lightTexture, overlayTexture, matrixStack, vertexBuilder);
+            }
+            else
+            {
+                stack.getItem().getItemStackTileEntityRenderer().renderByItem(stack, transformType, matrixStack, renderTypeBuffer, lightTexture, overlayTexture);
+            }
+
+            matrixStack.popPose();
         }
     }
 
-    public static void renderColoredModel(IBakedModel model, ItemCameraTransforms.TransformType transformType, int color)
+    private static void renderModel(IBakedModel model, ItemStack stack, int color, int lightTexture, int overlayTexture, MatrixStack matrixStack, IVertexBuilder vertexBuilder)
     {
-        GlStateManager.pushMatrix();
-        Minecraft.getMinecraft().getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-        Minecraft.getMinecraft().getTextureManager().getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).setBlurMipmap(false, false);
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-        GlStateManager.enableRescaleNormal();
-        GlStateManager.alphaFunc(516, 0.1F);
-        GlStateManager.enableBlend();
-        GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-        GlStateManager.pushMatrix();
-        model = net.minecraftforge.client.ForgeHooksClient.handleCameraTransforms(model, transformType, false);
-        if(!model.isBuiltInRenderer())
+        Random random = new Random();
+        for(Direction direction : Direction.values())
         {
-            renderModel(model, color);
+            random.setSeed(42L);
+            renderQuads(matrixStack, vertexBuilder, model.getQuads(null, direction, random), stack, color, lightTexture, overlayTexture);
         }
-        GlStateManager.cullFace(GlStateManager.CullFace.BACK);
-        GlStateManager.popMatrix();
-        GlStateManager.disableRescaleNormal();
-        GlStateManager.disableBlend();
-        Minecraft.getMinecraft().getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-        Minecraft.getMinecraft().getTextureManager().getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).restoreLastBlurMipmap();
-        GlStateManager.popMatrix();
+        random.setSeed(42L);
+        renderQuads(matrixStack, vertexBuilder, model.getQuads(null, null, random), stack, color, lightTexture, overlayTexture);
     }
 
-    public static void renderModel(IBakedModel model, ItemCameraTransforms.TransformType transformType)
+    private static void renderQuads(MatrixStack matrixStack, IVertexBuilder vertexBuilder, List<BakedQuad> quads, ItemStack stack, int color, int lightTexture, int overlayTexture)
     {
-        GlStateManager.pushMatrix();
-        Minecraft.getMinecraft().getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-        Minecraft.getMinecraft().getTextureManager().getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).setBlurMipmap(false, false);
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-        GlStateManager.enableRescaleNormal();
-        GlStateManager.alphaFunc(516, 0.1F);
-        GlStateManager.enableBlend();
-        GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-        GlStateManager.pushMatrix();
-        model = net.minecraftforge.client.ForgeHooksClient.handleCameraTransforms(model, transformType, false);
-        if(!model.isBuiltInRenderer())
-        {
-            renderModel(model, -1);
-        }
-        GlStateManager.cullFace(GlStateManager.CullFace.BACK);
-        GlStateManager.popMatrix();
-        GlStateManager.disableRescaleNormal();
-        GlStateManager.disableBlend();
-        Minecraft.getMinecraft().getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-        Minecraft.getMinecraft().getTextureManager().getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).restoreLastBlurMipmap();
-        GlStateManager.popMatrix();
-    }
-
-    public static void renderModel(IBakedModel model, int color)
-    {
-        GlStateManager.pushMatrix();
-        GlStateManager.translate(-0.5F, -0.5F, -0.5F);
-        if(!model.isBuiltInRenderer())
-        {
-            renderModel(model, color, ItemStack.EMPTY);
-        }
-        GlStateManager.popMatrix();
-    }
-
-    private static void renderModel(IBakedModel model, int color, ItemStack stack)
-    {
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(7, DefaultVertexFormats.ITEM);
-        for(EnumFacing face : EnumFacing.values())
-        {
-            renderQuads(buffer, model.getQuads(null, face, 0L), color, stack);
-        }
-        renderQuads(buffer, model.getQuads(null, null, 0L), color, stack);
-        tessellator.draw();
-    }
-
-    private static void renderQuads(BufferBuilder renderer, List<BakedQuad> quads, int color, ItemStack stack)
-    {
-        boolean useItemColor = color == -1 && !stack.isEmpty();
+        boolean useItemColor = !stack.isEmpty() && color == -1;
+        MatrixStack.Entry entry = matrixStack.last();
         for(BakedQuad quad : quads)
         {
-            int tintColor = 0xFFFFFFFF;
-            if(quad.hasTintIndex())
+            int tintColor = 0xFFFFFF;
+            if(quad.isTinted())
             {
                 if(useItemColor)
                 {
-                    tintColor = Minecraft.getMinecraft().getItemColors().colorMultiplier(stack, quad.getTintIndex());
+                    tintColor = Minecraft.getInstance().getItemColors().getColor(stack, quad.getTintIndex());
                 }
                 else
                 {
                     tintColor = color;
                 }
-
-                if(EntityRenderer.anaglyphEnable)
-                {
-                    tintColor = TextureUtil.anaglyphColor(tintColor);
-                }
-
-                tintColor = tintColor | -16777216;
             }
-            LightUtil.renderQuadColor(renderer, quad, tintColor);
+            float red = (float) (tintColor >> 16 & 255) / 255.0F;
+            float green = (float) (tintColor >> 8 & 255) / 255.0F;
+            float blue = (float) (tintColor & 255) / 255.0F;
+            vertexBuilder.addVertexData(entry, quad, red, green, blue, lightTexture, overlayTexture, true);
         }
     }
 
-    public static void scissor(int x, int y, int width, int height)
+    public static List<ITextComponent> lines(ITextProperties text, int maxWidth)
     {
-        Minecraft mc = Minecraft.getMinecraft();
-        ScaledResolution resolution = new ScaledResolution(mc);
-        int scale = resolution.getScaleFactor();
-        GL11.glScissor(x * scale, mc.displayHeight - y * scale - height * scale, Math.max(0, width * scale), Math.max(0, height * scale));
-    }
-
-    /**
-     * Gets a ModelManager instance
-     */
-    public static ModelManager getModelManager()
-    {
-        return Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelShapes().getModelManager();
-    }
-
-    public static IBakedModel getModel(ItemStack stack)
-    {
-        return Minecraft.getMinecraft().getRenderItem().getItemModelMesher().getItemModel(stack);
-    }
-
-    /**
-     * Gets an IBakedModel of the wheel currently on a powered vehicle.
-     * If there are no wheels installed on the vehicle, a null model will be returned.
-     *
-     * @param entity the powered vehicle to get the wheel model from
-     * @return an IBakedModel of the wheel or null if wheels are not present
-     */
-    @Nullable
-    public static IBakedModel getWheelModel(EntityPoweredVehicle entity)
-    {
-        if(entity.hasWheels())
-        {
-            ItemStack stack = new ItemStack(ModItems.WHEEL, 1, entity.getWheelType().ordinal());
-            if(!stack.isEmpty())
-            {
-                return RenderUtil.getModel(stack);
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Gets an IBakedModel of the engine currently on a powered vehicle.
-     * If there is no engine installed in the vehicle, a null model will be returned.
-     *
-     * @param entity the powered vehicle to get the engine model from
-     * @return an IBakedModel of the engine or null if the engine is not present
-     */
-    @Nullable
-    public static IBakedModel getEngineModel(EntityPoweredVehicle entity)
-    {
-        if(entity.hasEngine())
-        {
-            ItemStack stack = ItemStack.EMPTY;
-            switch(entity.getEngineType())
-            {
-                case SMALL_MOTOR:
-                    stack = new ItemStack(ModItems.SMALL_ENGINE, 1, entity.getEngineTier().ordinal());
-                    break;
-                case LARGE_MOTOR:
-                    stack = new ItemStack(ModItems.LARGE_ENGINE, 1, entity.getEngineTier().ordinal());
-                    break;
-                case ELECTRIC_MOTOR:
-                    stack = new ItemStack(ModItems.ELECTRIC_ENGINE, 1, entity.getEngineTier().ordinal());
-                    break;
-            }
-            if(!stack.isEmpty())
-            {
-                return RenderUtil.getModel(stack);
-            }
-        }
-        return null;
+        List<ITextProperties> lines = Minecraft.getInstance().font.getSplitter().splitLines(text, maxWidth, Style.EMPTY);
+        return lines.stream().map(t -> new StringTextComponent(t.getString()).withStyle(TextFormatting.GRAY)).collect(Collectors.toList());
     }
 }

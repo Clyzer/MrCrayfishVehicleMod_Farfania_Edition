@@ -1,48 +1,58 @@
 package com.mrcrayfish.vehicle.network.message;
 
-import com.mrcrayfish.vehicle.VehicleMod;
-import io.netty.buffer.ByteBuf;
-import net.minecraft.client.Minecraft;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraftforge.fml.common.network.ByteBufUtils;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import com.mrcrayfish.vehicle.client.network.ClientPlayHandler;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.network.PacketBuffer;
+import net.minecraftforge.fml.network.NetworkDirection;
+import net.minecraftforge.fml.network.NetworkEvent;
+
+import java.util.function.Supplier;
 
 /**
  * Author: MrCrayfish
  */
-public class MessageSyncHeldVehicle implements IMessage, IMessageHandler<MessageSyncHeldVehicle, IMessage>
+public class MessageSyncHeldVehicle implements IMessage<MessageSyncHeldVehicle>
 {
     private int entityId;
-    private NBTTagCompound vehicleTag;
+    private CompoundNBT vehicleTag;
 
     public MessageSyncHeldVehicle() {}
 
-    public MessageSyncHeldVehicle(int entityId, NBTTagCompound vehicleTag)
+    public MessageSyncHeldVehicle(int entityId, CompoundNBT vehicleTag)
     {
         this.entityId = entityId;
         this.vehicleTag = vehicleTag;
     }
 
     @Override
-    public void toBytes(ByteBuf buf)
+    public void encode(MessageSyncHeldVehicle message, PacketBuffer buffer)
     {
-        buf.writeInt(this.entityId);
-        ByteBufUtils.writeTag(buf, this.vehicleTag);
+        buffer.writeVarInt(message.entityId);
+        buffer.writeNbt(message.vehicleTag);
     }
 
     @Override
-    public void fromBytes(ByteBuf buf)
+    public MessageSyncHeldVehicle decode(PacketBuffer buffer)
     {
-        this.entityId = buf.readInt();
-        this.vehicleTag = ByteBufUtils.readTag(buf);
+        return new MessageSyncHeldVehicle(buffer.readVarInt(), buffer.readNbt());
     }
 
     @Override
-    public IMessage onMessage(MessageSyncHeldVehicle message, MessageContext ctx)
+    public void handle(MessageSyncHeldVehicle message, Supplier<NetworkEvent.Context> supplier)
     {
-        Minecraft.getMinecraft().addScheduledTask(() -> VehicleMod.proxy.syncHeldVehicle(message.entityId, message.vehicleTag));
-        return null;
+        if(supplier.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT)
+        {
+            IMessage.enqueueTask(supplier, () -> ClientPlayHandler.handleSyncHeldVehicle(message));
+        }
+    }
+
+    public int getEntityId()
+    {
+        return this.entityId;
+    }
+
+    public CompoundNBT getVehicleTag()
+    {
+        return this.vehicleTag;
     }
 }

@@ -4,21 +4,23 @@ import com.mrcrayfish.vehicle.Reference;
 import com.mrcrayfish.vehicle.network.PacketHandler;
 import com.mrcrayfish.vehicle.network.message.MessageSyncHeldVehicle;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.nbt.NBTBase;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.INBT;
+import net.minecraft.util.Direction;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.network.PacketDistributor;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -37,67 +39,75 @@ public class HeldVehicleDataHandler
         MinecraftForge.EVENT_BUS.register(new HeldVehicleDataHandler());
     }
 
-    public static boolean isHoldingVehicle(EntityPlayer player)
+    public static boolean isHoldingVehicle(PlayerEntity player)
     {
         IHeldVehicle handler = getHandler(player);
         if(handler != null)
         {
-            return !handler.getVehicleTag().hasNoTags();
+            return !handler.getVehicleTag().isEmpty();
         }
         return false;
     }
 
-    public static NBTTagCompound getHeldVehicle(EntityPlayer player)
+    public static CompoundNBT getHeldVehicle(PlayerEntity player)
     {
         IHeldVehicle handler = getHandler(player);
         if(handler != null)
         {
             return handler.getVehicleTag();
         }
-        return new NBTTagCompound();
+        return new CompoundNBT();
     }
 
-    public static void setHeldVehicle(EntityPlayer player, NBTTagCompound vehicleTag)
+    public static void setHeldVehicle(PlayerEntity player, CompoundNBT vehicleTag)
     {
         IHeldVehicle handler = getHandler(player);
         if(handler != null)
         {
             handler.setVehicleTag(vehicleTag);
         }
-        if(!player.world.isRemote)
+        if(!player.level.isClientSide)
         {
-            PacketHandler.INSTANCE.sendTo(new MessageSyncHeldVehicle(player.getEntityId(), vehicleTag), (EntityPlayerMP) player);
-            PacketHandler.INSTANCE.sendToAllTracking(new MessageSyncHeldVehicle(player.getEntityId(), vehicleTag), player);
+            PacketHandler.instance.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> player), new MessageSyncHeldVehicle(player.getId(), vehicleTag));
         }
     }
 
     @Nullable
-    public static IHeldVehicle getHandler(EntityPlayer player)
+    public static IHeldVehicle getHandler(PlayerEntity player)
     {
-        if (player.hasCapability(CAPABILITY_HELD_VEHICLE, EnumFacing.DOWN))
-        {
-            return player.getCapability(CAPABILITY_HELD_VEHICLE, EnumFacing.DOWN);
-        }
-        return null;
+        return player.getCapability(CAPABILITY_HELD_VEHICLE, Direction.DOWN).orElse(null);
     }
 
     @SubscribeEvent
     public void attachCapabilities(AttachCapabilitiesEvent<Entity> event)
     {
-        if (event.getObject() instanceof EntityPlayer)
+        if (event.getObject() instanceof PlayerEntity)
         {
             event.addCapability(new ResourceLocation(Reference.MOD_ID, "held_vehicle"), new Provider());
         }
     }
 
     @SubscribeEvent
+    public void onPlayerClone(PlayerEvent.Clone event)
+    {
+        if(event.isWasDeath())
+            return;
+
+        CompoundNBT vehicleTag = getHeldVehicle(event.getOriginal());
+        if(!vehicleTag.isEmpty())
+        {
+            setHeldVehicle(event.getPlayer(), vehicleTag);
+        }
+    }
+
+    @SubscribeEvent
     public void onStartTracking(PlayerEvent.StartTracking event)
     {
-        if(event.getTarget() instanceof EntityPlayer)
+        if(event.getTarget() instanceof PlayerEntity)
         {
-            EntityPlayer player = (EntityPlayer) event.getTarget();
-            NBTTagCompound vehicleTag = getHeldVehicle(player);
-            PacketHandler.INSTANCE.sendTo(new MessageSyncHeldVehicle(player.getEntityId(), vehicleTag), (EntityPlayerMP) event.getEntityPlayer());
+            PlayerEntity player = (PlayerEntity) event.getTarget();
+            CompoundNBT vehicleTag = getHeldVehicle(player);
+            PacketHandler.instance.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) event.getPlayer()), new MessageSyncHeldVehicle(player.getId(), vehicleTag));
         }
     }
 
@@ -105,35 +115,34 @@ public class HeldVehicleDataHandler
     public void onPlayerJoinWorld(EntityJoinWorldEvent event)
     {
         Entity entity = event.getEntity();
-        if(entity instanceof EntityPlayer && !event.getWorld().isRemote)
+        if(entity instanceof PlayerEntity && !event.getWorld().isClientSide)
         {
-            EntityPlayer player = (EntityPlayer) entity;
-            NBTTagCompound vehicleTag = getHeldVehicle(player);
-            PacketHandler.INSTANCE.sendTo(new MessageSyncHeldVehicle(player.getEntityId(), vehicleTag), (EntityPlayerMP) player);
-            //PacketHandler.INSTANCE.sendToAllTracking(new MessageSyncHeldVehicle(player.getEntityId(), vehicleTag), player);
+            PlayerEntity player = (PlayerEntity) entity;
+            CompoundNBT vehicleTag = getHeldVehicle(player);
+            PacketHandler.instance.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new MessageSyncHeldVehicle(player.getId(), vehicleTag));
         }
     }
 
     public interface IHeldVehicle
     {
-        void setVehicleTag(NBTTagCompound tagCompound);
-        NBTTagCompound getVehicleTag();
+        void setVehicleTag(CompoundNBT tagCompound);
+        CompoundNBT getVehicleTag();
     }
 
     public static class HeldVehicle implements IHeldVehicle
     {
-        private NBTTagCompound tagCompound = new NBTTagCompound();
+        private CompoundNBT compound = new CompoundNBT();
 
         @Override
-        public void setVehicleTag(NBTTagCompound tagCompound)
+        public void setVehicleTag(CompoundNBT tagCompound)
         {
-            this.tagCompound = tagCompound;
+            this.compound = tagCompound;
         }
 
         @Override
-        public NBTTagCompound getVehicleTag()
+        public CompoundNBT getVehicleTag()
         {
-            return tagCompound;
+            return compound;
         }
     }
 
@@ -141,45 +150,39 @@ public class HeldVehicleDataHandler
     {
         @Nullable
         @Override
-        public NBTBase writeNBT(Capability<IHeldVehicle> capability, IHeldVehicle instance, EnumFacing side)
+        public INBT writeNBT(Capability<IHeldVehicle> capability, IHeldVehicle instance, Direction side)
         {
             return instance.getVehicleTag();
         }
 
         @Override
-        public void readNBT(Capability<IHeldVehicle> capability, IHeldVehicle instance, EnumFacing side, NBTBase nbt)
+        public void readNBT(Capability<IHeldVehicle> capability, IHeldVehicle instance, Direction side, INBT nbt)
         {
-            instance.setVehicleTag((NBTTagCompound) nbt);
+            instance.setVehicleTag((CompoundNBT) nbt);
         }
     }
 
-    public static class Provider implements ICapabilitySerializable<NBTTagCompound>
+    public static class Provider implements ICapabilitySerializable<CompoundNBT>
     {
         final IHeldVehicle INSTANCE = CAPABILITY_HELD_VEHICLE.getDefaultInstance();
 
         @Override
-        public boolean hasCapability(@Nonnull Capability<?> capability, @Nullable EnumFacing facing)
+        public CompoundNBT serializeNBT()
         {
-            return capability == CAPABILITY_HELD_VEHICLE;
-        }
-
-        @Nullable
-        @Override
-        public <T> T getCapability(@Nonnull Capability<T> capability, @Nullable EnumFacing facing)
-        {
-            return hasCapability(capability, facing) ? CAPABILITY_HELD_VEHICLE.cast(INSTANCE) : null;
+            return (CompoundNBT) CAPABILITY_HELD_VEHICLE.getStorage().writeNBT(CAPABILITY_HELD_VEHICLE, INSTANCE, null);
         }
 
         @Override
-        public NBTTagCompound serializeNBT()
+        public void deserializeNBT(CompoundNBT compound)
         {
-            return (NBTTagCompound) CAPABILITY_HELD_VEHICLE.getStorage().writeNBT(CAPABILITY_HELD_VEHICLE, INSTANCE, null);
+            CAPABILITY_HELD_VEHICLE.getStorage().readNBT(CAPABILITY_HELD_VEHICLE, INSTANCE, null, compound);
         }
 
+        @Nonnull
         @Override
-        public void deserializeNBT(NBTTagCompound tagCompound)
+        public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side)
         {
-            CAPABILITY_HELD_VEHICLE.getStorage().readNBT(CAPABILITY_HELD_VEHICLE, INSTANCE, null, tagCompound);
+            return CAPABILITY_HELD_VEHICLE.orEmpty(cap, LazyOptional.of(() -> INSTANCE));
         }
     }
 }

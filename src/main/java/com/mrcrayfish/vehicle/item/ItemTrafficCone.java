@@ -1,14 +1,17 @@
 package com.mrcrayfish.vehicle.item;
 
+import com.mrcrayfish.vehicle.VehicleMod;
+import com.mrcrayfish.vehicle.util.RenderUtil;
 import net.minecraft.block.Block;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.resources.I18n;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.inventory.EntityEquipmentSlot;
-import net.minecraft.item.ItemBlock;
+import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
@@ -17,30 +20,30 @@ import java.util.List;
 /**
  * Author: MrCrayfish
  */
-public class ItemTrafficCone extends ItemBlock
+public class ItemTrafficCone extends BlockItem
 {
     public ItemTrafficCone(Block block)
     {
-        super(block);
+        super(block, new Item.Properties().tab(VehicleMod.CREATIVE_TAB));
+    }
+
+    @Nullable
+    @Override
+    public EquipmentSlotType getEquipmentSlot(ItemStack stack)
+    {
+        return EquipmentSlotType.HEAD;
     }
 
     @Override
-    public EntityEquipmentSlot getEquipmentSlot(ItemStack stack)
+    public void appendHoverText(ItemStack stack, @Nullable World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn)
     {
-        return EntityEquipmentSlot.HEAD;
-    }
-
-    @Override
-    public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn)
-    {
-        if(GuiScreen.isShiftKeyDown())
+        if(Screen.hasShiftDown())
         {
-            String info = I18n.format("tile.vehicle.traffic_cone.info");
-            tooltip.addAll(Minecraft.getMinecraft().fontRenderer.listFormattedStringToWidth(info, 150));
+            tooltip.addAll(RenderUtil.lines(new TranslationTextComponent(this.getDescriptionId() + ".info"), 150));
         }
         else
         {
-            tooltip.add(TextFormatting.YELLOW + I18n.format("vehicle.info_help"));
+            tooltip.add(new TranslationTextComponent("vehicle.info_help").withStyle(TextFormatting.YELLOW));
         }
     }
 }

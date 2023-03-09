@@ -1,16 +1,17 @@
 package com.mrcrayfish.vehicle.util;
 
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.player.EntityPlayer;
+import com.mrcrayfish.vehicle.crafting.WorkstationIngredient;
+import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
+import net.minecraft.item.crafting.Ingredient;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.ListNBT;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants;
 
-import javax.annotation.Nullable;
 import java.util.Random;
 
 /**
@@ -20,35 +21,35 @@ public class InventoryUtil
 {
     private static final Random RANDOM = new Random();
 
-    public static void writeInventoryToNBT(NBTTagCompound compound, String tagName, @Nullable IInventory inventory)
+    public static void writeInventoryToNBT(CompoundNBT compound, String tagName, IInventory inventory)
     {
-        NBTTagList tagList = new NBTTagList();
-        for(int i = 0; i < inventory.getSizeInventory(); i++)
+        ListNBT tagList = new ListNBT();
+        for(int i = 0; i < inventory.getContainerSize(); i++)
         {
-            ItemStack stack = inventory.getStackInSlot(i);
+            ItemStack stack = inventory.getItem(i);
             if(!stack.isEmpty())
             {
-                NBTTagCompound tagCompound = new NBTTagCompound();
-                tagCompound.setByte("Slot", (byte) i);
-                stack.writeToNBT(tagCompound);
-                tagList.appendTag(tagCompound);
+                CompoundNBT stackTag = new CompoundNBT();
+                stackTag.putByte("Slot", (byte) i);
+                stack.save(stackTag);
+                tagList.add(stackTag);
             }
         }
-        compound.setTag(tagName, tagList);
+        compound.put(tagName, tagList);
     }
 
-    public static <T extends IInventory> T readInventoryToNBT(NBTTagCompound compound, String tagName, T t)
+    public static <T extends IInventory> T readInventoryToNBT(CompoundNBT compound, String tagName, T t)
     {
-        if(compound.hasKey(tagName, Constants.NBT.TAG_LIST))
+        if(compound.contains(tagName, Constants.NBT.TAG_LIST))
         {
-            NBTTagList tagList = compound.getTagList(tagName, Constants.NBT.TAG_COMPOUND);
-            for(int i = 0; i < tagList.tagCount(); i++)
+            ListNBT tagList = compound.getList(tagName, Constants.NBT.TAG_COMPOUND);
+            for(int i = 0; i < tagList.size(); i++)
             {
-                NBTTagCompound tagCompound = tagList.getCompoundTagAt(i);
+                CompoundNBT tagCompound = tagList.getCompound(i);
                 byte slot = tagCompound.getByte("Slot");
-                if(slot >= 0 && slot < t.getSizeInventory())
+                if(slot >= 0 && slot < t.getContainerSize())
                 {
-                    t.setInventorySlotContents(slot, new ItemStack(tagCompound));
+                    t.setItem(slot, ItemStack.of(tagCompound));
                 }
             }
         }
@@ -57,9 +58,9 @@ public class InventoryUtil
 
     public static void dropInventoryItems(World worldIn, double x, double y, double z, IInventory inventory)
     {
-        for(int i = 0; i < inventory.getSizeInventory(); ++i)
+        for(int i = 0; i < inventory.getContainerSize(); ++i)
         {
-            ItemStack itemstack = inventory.getStackInSlot(i);
+            ItemStack itemstack = inventory.getItem(i);
 
             if(!itemstack.isEmpty())
             {
@@ -76,20 +77,19 @@ public class InventoryUtil
 
         while(!stack.isEmpty())
         {
-            EntityItem entity = new EntityItem(worldIn, x + (double) offsetX, y + (double) offsetY, z + (double) offsetZ, stack.splitStack(RANDOM.nextInt(21) + 10));
-            entity.motionX = RANDOM.nextGaussian() * 0.05D;
-            entity.motionY = RANDOM.nextGaussian() * 0.05D + 0.2D;
-            entity.motionZ = RANDOM.nextGaussian() * 0.05D;
-            worldIn.spawnEntity(entity);
+            ItemEntity entity = new ItemEntity(worldIn, x + offsetX, y + offsetY, z + offsetZ, stack.split(RANDOM.nextInt(21) + 10));
+            entity.setDeltaMovement(RANDOM.nextGaussian() * 0.05D, RANDOM.nextGaussian() * 0.05D + 0.2D, RANDOM.nextGaussian() * 0.05D);
+            entity.setDefaultPickUpDelay();
+            worldIn.addFreshEntity(entity);
         }
     }
 
-    public static int getItemAmount(EntityPlayer player, Item item)
+    public static int getItemAmount(PlayerEntity player, Item item)
     {
         int amount = 0;
-        for(int i = 0; i < player.inventory.getSizeInventory(); i++)
+        for(int i = 0; i < player.inventory.getContainerSize(); i++)
         {
-            ItemStack stack = player.inventory.getStackInSlot(i);
+            ItemStack stack = player.inventory.getItem(i);
             if(!stack.isEmpty() && stack.getItem() == item)
             {
                 amount += stack.getCount();
@@ -98,10 +98,10 @@ public class InventoryUtil
         return amount;
     }
 
-    public static boolean hasItemAndAmount(EntityPlayer player, Item item, int amount)
+    public static boolean hasItemAndAmount(PlayerEntity player, Item item, int amount)
     {
         int count = 0;
-        for(ItemStack stack : player.inventory.mainInventory)
+        for(ItemStack stack : player.inventory.items)
         {
             if(stack != null && stack.getItem() == item)
             {
@@ -111,13 +111,13 @@ public class InventoryUtil
         return amount <= count;
     }
 
-    public static boolean removeItemWithAmount(EntityPlayer player, Item item, int amount)
+    public static boolean removeItemWithAmount(PlayerEntity player, Item item, int amount)
     {
         if(hasItemAndAmount(player, item, amount))
         {
-            for(int i = 0; i < player.inventory.getSizeInventory(); i++)
+            for(int i = 0; i < player.inventory.getContainerSize(); i++)
             {
-                ItemStack stack = player.inventory.getStackInSlot(i);
+                ItemStack stack = player.inventory.getItem(i);
                 if(!stack.isEmpty() && stack.getItem() == item)
                 {
                     if(amount - stack.getCount() < 0)
@@ -128,7 +128,7 @@ public class InventoryUtil
                     else
                     {
                         amount -= stack.getCount();
-                        player.inventory.mainInventory.set(i, ItemStack.EMPTY);
+                        player.inventory.items.set(i, ItemStack.EMPTY);
                         if(amount == 0) return true;
                     }
                 }
@@ -137,10 +137,10 @@ public class InventoryUtil
         return false;
     }
 
-    public static int getItemStackAmount(EntityPlayer player, ItemStack find)
+    public static int getItemStackAmount(PlayerEntity player, ItemStack find)
     {
         int count = 0;
-        for(ItemStack stack : player.inventory.mainInventory)
+        for(ItemStack stack : player.inventory.items)
         {
             if(!stack.isEmpty() && areItemStacksEqualIgnoreCount(stack, find))
             {
@@ -150,10 +150,10 @@ public class InventoryUtil
         return count;
     }
 
-    public static boolean hasItemStack(EntityPlayer player, ItemStack find)
+    public static boolean hasItemStack(PlayerEntity player, ItemStack find)
     {
         int count = 0;
-        for(ItemStack stack : player.inventory.mainInventory)
+        for(ItemStack stack : player.inventory.items)
         {
             if(!stack.isEmpty() && areItemStacksEqualIgnoreCount(stack, find))
             {
@@ -163,12 +163,25 @@ public class InventoryUtil
         return find.getCount() <= count;
     }
 
-    public static boolean removeItemStack(EntityPlayer player, ItemStack find)
+    public static boolean hasWorkstationIngredient(PlayerEntity player, WorkstationIngredient find)
+    {
+        int count = 0;
+        for(ItemStack stack : player.inventory.items)
+        {
+            if(!stack.isEmpty() && find.test(stack))
+            {
+                count += stack.getCount();
+            }
+        }
+        return find.getCount() <= count;
+    }
+
+    public static boolean removeItemStack(PlayerEntity player, ItemStack find)
     {
         int amount = find.getCount();
-        for(int i = 0; i < player.inventory.getSizeInventory(); i++)
+        for(int i = 0; i < player.inventory.getContainerSize(); i++)
         {
-            ItemStack stack = player.inventory.getStackInSlot(i);
+            ItemStack stack = player.inventory.getItem(i);
             if(!stack.isEmpty() && areItemStacksEqualIgnoreCount(stack, find))
             {
                 if(amount - stack.getCount() < 0)
@@ -179,7 +192,7 @@ public class InventoryUtil
                 else
                 {
                     amount -= stack.getCount();
-                    player.inventory.mainInventory.set(i, ItemStack.EMPTY);
+                    player.inventory.items.set(i, ItemStack.EMPTY);
                     if(amount == 0) return true;
                 }
             }
@@ -187,23 +200,43 @@ public class InventoryUtil
         return false;
     }
 
-    private static boolean areItemStacksEqualIgnoreCount(ItemStack source, ItemStack target)
+    public static boolean removeWorkstationIngredient(PlayerEntity player, WorkstationIngredient find)
+    {
+        int amount = find.getCount();
+        for(int i = 0; i < player.inventory.getContainerSize(); i++)
+        {
+            ItemStack stack = player.inventory.getItem(i);
+            if(!stack.isEmpty() && find.test(stack))
+            {
+                if(amount - stack.getCount() < 0)
+                {
+                    stack.shrink(amount);
+                    return true;
+                }
+                else
+                {
+                    amount -= stack.getCount();
+                    player.inventory.items.set(i, ItemStack.EMPTY);
+                    if(amount == 0) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public static boolean areItemStacksEqualIgnoreCount(ItemStack source, ItemStack target)
     {
         if(source.getItem() != target.getItem())
         {
             return false;
         }
-        else if(source.getItemDamage() != target.getItemDamage())
-        {
-            return false;
-        }
-        else if(source.getTagCompound() == null && target.getTagCompound() != null)
+        else if(source.getTag() == null && target.getTag() != null)
         {
             return false;
         }
         else
         {
-            return (source.getTagCompound() == null || source.getTagCompound().equals(target.getTagCompound())) && source.areCapsCompatible(target);
+            return (source.getTag() == null || source.getTag().equals(target.getTag())) && source.areCapsCompatible(target);
         }
     }
 }

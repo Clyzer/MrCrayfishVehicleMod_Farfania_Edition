@@ -1,19 +1,17 @@
 package com.mrcrayfish.vehicle.network.message;
 
-import com.mrcrayfish.vehicle.VehicleMod;
-import io.netty.buffer.ByteBuf;
-import net.minecraft.nbt.NBTTagCompound;
+import com.mrcrayfish.vehicle.client.network.ClientPlayHandler;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.common.network.ByteBufUtils;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import net.minecraftforge.fml.network.NetworkEvent;
+
+import java.util.function.Supplier;
 
 /**
  * Author: MrCrayfish
  */
-public class MessageEntityFluid implements IMessage, IMessageHandler<MessageEntityFluid, IMessage>
+public class MessageEntityFluid implements IMessage<MessageEntityFluid>
 {
     private int entityId;
     private FluidStack stack;
@@ -27,30 +25,31 @@ public class MessageEntityFluid implements IMessage, IMessageHandler<MessageEnti
     }
 
     @Override
-    public void toBytes(ByteBuf buf)
+    public void encode(MessageEntityFluid message, PacketBuffer buffer)
     {
-        buf.writeInt(entityId);
-        buf.writeBoolean(stack != null);
-        if(stack != null)
-        {
-            ByteBufUtils.writeTag(buf, stack.writeToNBT(new NBTTagCompound()));
-        }
+        buffer.writeInt(message.entityId);
+        buffer.writeNbt(message.stack.writeToNBT(new CompoundNBT()));
     }
 
     @Override
-    public void fromBytes(ByteBuf buf)
+    public MessageEntityFluid decode(PacketBuffer buffer)
     {
-        entityId = buf.readInt();
-        if(buf.readBoolean())
-        {
-            stack = FluidStack.loadFluidStackFromNBT(ByteBufUtils.readTag(buf));
-        }
+        return new MessageEntityFluid(buffer.readInt(), FluidStack.loadFluidStackFromNBT(buffer.readNbt()));
     }
 
     @Override
-    public IMessage onMessage(MessageEntityFluid message, MessageContext ctx)
+    public void handle(MessageEntityFluid message, Supplier<NetworkEvent.Context> supplier)
     {
-        FMLCommonHandler.instance().getWorldThread(ctx.netHandler).addScheduledTask(() -> VehicleMod.proxy.syncEntityFluid(message.entityId, message.stack));
-        return null;
+        IMessage.enqueueTask(supplier, () -> ClientPlayHandler.handleEntityFluid(message));
+    }
+
+    public int getEntityId()
+    {
+        return this.entityId;
+    }
+
+    public FluidStack getStack()
+    {
+        return this.stack;
     }
 }

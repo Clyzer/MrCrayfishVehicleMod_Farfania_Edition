@@ -1,18 +1,17 @@
 package com.mrcrayfish.vehicle.network.message;
 
-import com.mrcrayfish.vehicle.VehicleMod;
-import io.netty.buffer.ByteBuf;
-import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import com.mrcrayfish.vehicle.client.network.ClientPlayHandler;
+import net.minecraft.network.PacketBuffer;
+import net.minecraftforge.fml.network.NetworkDirection;
+import net.minecraftforge.fml.network.NetworkEvent;
 
 import java.util.UUID;
+import java.util.function.Supplier;
 
 /**
  * Author: MrCrayfish
  */
-public class MessageSyncPlayerSeat implements IMessage, IMessageHandler<MessageSyncPlayerSeat, IMessage>
+public class MessageSyncPlayerSeat implements IMessage<MessageSyncPlayerSeat>
 {
     private int entityId;
     private int seatIndex;
@@ -28,29 +27,40 @@ public class MessageSyncPlayerSeat implements IMessage, IMessageHandler<MessageS
     }
 
     @Override
-    public void toBytes(ByteBuf buf)
+    public void encode(MessageSyncPlayerSeat message, PacketBuffer buffer)
     {
-        buf.writeInt(this.entityId);
-        buf.writeInt(this.seatIndex);
-        buf.writeLong(this.uuid.getMostSignificantBits());
-        buf.writeLong(this.uuid.getLeastSignificantBits());
+        buffer.writeVarInt(message.entityId);
+        buffer.writeVarInt(message.seatIndex);
+        buffer.writeUUID(message.uuid);
     }
 
     @Override
-    public void fromBytes(ByteBuf buf)
+    public MessageSyncPlayerSeat decode(PacketBuffer buffer)
     {
-        this.entityId = buf.readInt();
-        this.seatIndex = buf.readInt();
-        this.uuid = new UUID(buf.readLong(), buf.readLong());
+        return new MessageSyncPlayerSeat(buffer.readVarInt(), buffer.readVarInt(), buffer.readUUID());
     }
 
     @Override
-    public IMessage onMessage(MessageSyncPlayerSeat message, MessageContext ctx)
+    public void handle(MessageSyncPlayerSeat message, Supplier<NetworkEvent.Context> supplier)
     {
-        FMLCommonHandler.instance().getWorldThread(ctx.netHandler).addScheduledTask(() ->
+        if(supplier.get().getDirection() == NetworkDirection.PLAY_TO_CLIENT)
         {
-            VehicleMod.proxy.syncPlayerSeat(message.entityId, message.seatIndex, message.uuid);
-        });
-        return null;
+            IMessage.enqueueTask(supplier, () -> ClientPlayHandler.handleSyncPlayerSeat(message));
+        }
+    }
+
+    public int getEntityId()
+    {
+        return this.entityId;
+    }
+
+    public int getSeatIndex()
+    {
+        return this.seatIndex;
+    }
+
+    public UUID getUuid()
+    {
+        return this.uuid;
     }
 }

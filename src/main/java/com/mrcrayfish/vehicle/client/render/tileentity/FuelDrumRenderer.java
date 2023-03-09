@@ -1,118 +1,112 @@
 package com.mrcrayfish.vehicle.client.render.tileentity;
 
-import com.mrcrayfish.vehicle.tileentity.TileEntityFuelDrum;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
+import com.mrcrayfish.vehicle.tileentity.FuelDrumTileEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.RenderState;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.texture.TextureMap;
-import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
+import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
+import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.inventory.container.PlayerContainer;
+import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.FluidTank;
+import net.minecraftforge.fluids.capability.templates.FluidTank;
 import org.lwjgl.opengl.GL11;
 
 /**
  * Author: MrCrayfish
  */
-public class FuelDrumRenderer extends TileEntitySpecialRenderer<TileEntityFuelDrum>
+public class FuelDrumRenderer extends TileEntityRenderer<FuelDrumTileEntity>
 {
-    @Override
-    public void render(TileEntityFuelDrum te, double x, double y, double z, float partialTicks, int destroyStage, float alpha)
+    public static final RenderType LABEL_BACKGROUND = RenderType.create("vehicle:fuel_drum_label_background", DefaultVertexFormats.POSITION_COLOR, GL11.GL_QUADS, 256, RenderType.State.builder().createCompositeState(false));
+    public static final RenderType LABEL_FLUID = RenderType.create("vehicle:fuel_drum_label_fluid", DefaultVertexFormats.POSITION_TEX, GL11.GL_QUADS, 256, RenderType.State.builder().setTextureState(new RenderState.TextureState(PlayerContainer.BLOCK_ATLAS, false, true)).createCompositeState(false));
+
+    public FuelDrumRenderer(TileEntityRendererDispatcher dispatcher)
     {
-        if(Minecraft.getMinecraft().player.isSneaking())
+        super(dispatcher);
+    }
+
+    @Override
+    public void render(FuelDrumTileEntity fuelDrumTileEntity, float partialTicks, MatrixStack matrixStack, IRenderTypeBuffer renderTypeBuffer, int lightTexture, int overlayTexture)
+    {
+        if(Minecraft.getInstance().player.isCrouching())
         {
-            if(te.hasFluid() && this.rendererDispatcher.cameraHitResult != null && te.getPos().equals(this.rendererDispatcher.cameraHitResult.getBlockPos()))
+            if(fuelDrumTileEntity.hasFluid() && this.renderer.cameraHitResult != null && this.renderer.cameraHitResult.getType() == RayTraceResult.Type.BLOCK)
             {
-                this.setLightmapDisabled(true);
-                drawFluidLabel(getFontRenderer(), te.getFluidTank(), (float) x + 0.5F, (float) y + 1.25F, (float) z + 0.5F);
-                GlStateManager.depthFunc(GL11.GL_GREATER);
-                drawFluidLabel(getFontRenderer(), te.getFluidTank(), (float) x + 0.5F, (float) y + 1.25F, (float) z + 0.5F);
-                GlStateManager.depthFunc(GL11.GL_LEQUAL);
-                this.setLightmapDisabled(false);
+                BlockRayTraceResult result = (BlockRayTraceResult) this.renderer.cameraHitResult;
+                if(result.getBlockPos().equals(fuelDrumTileEntity.getBlockPos()))
+                {
+                    this.drawFluidLabel(this.renderer.font, fuelDrumTileEntity.getFluidTank(), matrixStack, renderTypeBuffer);
+                }
             }
         }
     }
 
-    private void drawFluidLabel(FontRenderer fontRendererIn, FluidTank tank, float x, float y, float z)
+    private void drawFluidLabel(FontRenderer fontRendererIn, FluidTank tank, MatrixStack matrixStack, IRenderTypeBuffer renderTypeBuffer)
     {
-        if(tank.getFluid() == null)
+        if(tank.getFluid().isEmpty())
             return;
 
-        GlStateManager.pushMatrix();
-        GlStateManager.translate(x, y, z);
-        GlStateManager.glNormal3f(0.0F, 1.0F, 0.0F);
-        GlStateManager.rotate(-this.rendererDispatcher.entityYaw, 0.0F, 1.0F, 0.0F);
-        GlStateManager.rotate(this.rendererDispatcher.entityPitch, 1.0F, 0.0F, 0.0F);
-        GlStateManager.scale(-0.025F, -0.025F, 0.025F);
-        GlStateManager.disableLighting();
-        GlStateManager.disableTexture2D();
-
-        double level = tank.getFluidAmount() / (double) tank.getCapacity();
-        double width = 30;
-        double fuelWidth = width * level;
-        double remainingWidth = width - fuelWidth;
-        double offsetWidth = width / 2.0;
-
         FluidStack stack = tank.getFluid();
-        ResourceLocation resource = stack.getFluid().getStill();
-        TextureAtlasSprite sprite = Minecraft.getMinecraft().getTextureMapBlocks().getTextureExtry(resource.toString());
+        TextureAtlasSprite sprite = Minecraft.getInstance().getTextureAtlas(AtlasTexture.LOCATION_BLOCKS).apply(tank.getFluid().getFluid().getAttributes().getStillTexture());
         if(sprite != null)
         {
-            double minU = sprite.getMinU();
-            double maxU = sprite.getMaxU();
-            double minV = sprite.getMinV();
-            double maxV = sprite.getMaxV();
+            float level = tank.getFluidAmount() / (float) tank.getCapacity();
+            float width = 30F;
+            float fuelWidth = width * level;
+            float remainingWidth = width - fuelWidth;
+            float offsetWidth = width / 2.0F;
 
-            double deltaV = maxV - minV;
-            maxV = minV + (deltaV * 4 * 0.0625);
+            matrixStack.pushPose();
+            matrixStack.translate(0.5, 1.25, 0.5);
+            matrixStack.mulPose(this.renderer.camera.rotation());
+            matrixStack.scale(-0.025F, -0.025F, 0.025F);
 
-            double deltaU = maxU - minU;
-            maxU = minU + deltaU * level;
+            IVertexBuilder backgroundBuilder = renderTypeBuffer.getBuffer(LABEL_BACKGROUND);
 
-            Minecraft.getMinecraft().getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
+            /* Background */
+            Matrix4f matrix = matrixStack.last().pose();
+            backgroundBuilder.vertex(matrix, -offsetWidth - 1.0F, -2.0F, -0.01F).color(0.5F, 0.5F, 0.5F, 1.0F).endVertex();
+            backgroundBuilder.vertex(matrix, -offsetWidth - 1.0F, 5.0F, -0.01F).color(0.5F, 0.5F, 0.5F, 1.0F).endVertex();
+            backgroundBuilder.vertex(matrix, -offsetWidth + width + 1.0F, 5.0F, -0.01F).color(0.5F, 0.5F, 0.5F, 1.0F).endVertex();
+            backgroundBuilder.vertex(matrix, -offsetWidth + width + 1.0F, -2.0F, -0.01F).color(0.5F, 0.5F, 0.5F, 1.0F).endVertex();
 
-            Tessellator tessellator = Tessellator.getInstance();
-            BufferBuilder buffer = tessellator.getBuffer();
+            matrixStack.translate(0, 0, -0.05);
 
-            buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
-            buffer.pos(-offsetWidth - 1, -2.0, -0.01).color(0.5F, 0.5F, 0.5F, 1.0F).endVertex();
-            buffer.pos(-offsetWidth - 1, 5.0, -0.01).color(0.5F, 0.5F, 0.5F, 1.0F).endVertex();
-            buffer.pos(-offsetWidth + width + 1, 5.0, -0.01).color(0.5F, 0.5F, 0.5F, 1.0F).endVertex();
-            buffer.pos(-offsetWidth + width + 1, -2.0, -0.01).color(0.5F, 0.5F, 0.5F, 1.0F).endVertex();
-            tessellator.draw();
+            /* Remaining */
+            matrix = matrixStack.last().pose();
+            backgroundBuilder.vertex(matrix, -offsetWidth + fuelWidth, -1.0F, 0.0F).color(0.4F, 0.4F, 0.4F, 1.0F).endVertex();
+            backgroundBuilder.vertex(matrix, -offsetWidth + fuelWidth, 4.0F, 0.0F).color(0.4F, 0.4F, 0.4F, 1.0F).endVertex();
+            backgroundBuilder.vertex(matrix, -offsetWidth + fuelWidth + remainingWidth, 4.0F, 0.0F).color(0.4F, 0.4F, 0.4F, 1.0F).endVertex();
+            backgroundBuilder.vertex(matrix, -offsetWidth + fuelWidth + remainingWidth, -1.0F, 0.0F).color(0.4F, 0.4F, 0.4F, 1.0F).endVertex();
 
-            GlStateManager.enableTexture2D();
+            float minU = sprite.getU0();
+            float maxU = minU + (sprite.getU1() - minU) * level;
+            float minV = sprite.getV0();
+            float maxV = minV + (sprite.getV1() - minV) * 4 * 0.0625F;
 
-            buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-            buffer.pos(-offsetWidth, -1.0, 0.0).tex(minU, maxV).endVertex();
-            buffer.pos(-offsetWidth, 4.0, 0.0).tex(minU, minV).endVertex();
-            buffer.pos(-offsetWidth + fuelWidth, 4.0, 0.0).tex(maxU, minV).endVertex();
-            buffer.pos(-offsetWidth + fuelWidth, -1.0, 0.0).tex(maxU, maxV).endVertex();
-            tessellator.draw();
+            /* Fluid Texture */
+            IVertexBuilder fluidBuilder = renderTypeBuffer.getBuffer(LABEL_FLUID);
+            fluidBuilder.vertex(matrix, -offsetWidth, -1.0F, 0.0F).uv(minU, maxV).endVertex();
+            fluidBuilder.vertex(matrix, -offsetWidth, 4.0F, 0.0F).uv(minU, minV).endVertex();
+            fluidBuilder.vertex(matrix, -offsetWidth + fuelWidth, 4.0F, 0.0F).uv(maxU, minV).endVertex();
+            fluidBuilder.vertex(matrix, -offsetWidth + fuelWidth, -1.0F, 0.0F).uv(maxU, maxV).endVertex();
 
-            GlStateManager.disableTexture2D();
+            /* Fluid Name */
+            matrixStack.scale(0.5F, 0.5F, 0.5F);
+            String name = stack.getDisplayName().getString();
+            int nameWidth = fontRendererIn.width(name) / 2;
+            fontRendererIn.draw(matrixStack, name, -nameWidth, -14, -1);
 
-            buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
-            buffer.pos(-offsetWidth + fuelWidth, -1.0, 0.0).color(0.4F, 0.4F, 0.4F, 1.0F).endVertex();
-            buffer.pos(-offsetWidth + fuelWidth, 4.0, 0.0).color(0.4F, 0.4F, 0.4F, 1.0F).endVertex();
-            buffer.pos(-offsetWidth + fuelWidth + remainingWidth, 4.0, 0.0).color(0.4F, 0.4F, 0.4F, 1.0F).endVertex();
-            buffer.pos(-offsetWidth + fuelWidth + remainingWidth, -1.0, 0.0).color(0.4F, 0.4F, 0.4F, 1.0F).endVertex();
-            tessellator.draw();
+            matrixStack.popPose();
         }
-
-        GlStateManager.enableTexture2D();
-
-        GlStateManager.scale(0.5, 0.5, 0.5);
-        String name = stack.getLocalizedName();
-        int nameWidth = fontRendererIn.getStringWidth(name) / 2;
-        fontRendererIn.drawString(stack.getLocalizedName(), -nameWidth, -14, -1);
-
-        GlStateManager.enableLighting();
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-        GlStateManager.popMatrix();
     }
 }

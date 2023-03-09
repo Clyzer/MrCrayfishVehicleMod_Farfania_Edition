@@ -2,57 +2,62 @@ package com.mrcrayfish.vehicle.network.message;
 
 import com.mrcrayfish.vehicle.common.Seat;
 import com.mrcrayfish.vehicle.common.SeatTracker;
-import com.mrcrayfish.vehicle.entity.EntityVehicle;
-import io.netty.buffer.ByteBuf;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import com.mrcrayfish.vehicle.entity.VehicleEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.network.PacketBuffer;
+import net.minecraftforge.fml.network.NetworkDirection;
+import net.minecraftforge.fml.network.NetworkEvent;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Author: MrCrayfish
  */
-public class MessageCycleSeats implements IMessage, IMessageHandler<MessageCycleSeats, IMessage>
+public class MessageCycleSeats implements IMessage<MessageCycleSeats>
 {
     public MessageCycleSeats() {}
 
     @Override
-    public void toBytes(ByteBuf buf) {}
+    public void encode(MessageCycleSeats message, PacketBuffer buffer) {}
 
     @Override
-    public void fromBytes(ByteBuf buf) {}
-
-    @Override
-    public IMessage onMessage(MessageCycleSeats message, MessageContext ctx)
+    public MessageCycleSeats decode(PacketBuffer buffer)
     {
-        FMLCommonHandler.instance().getWorldThread(ctx.netHandler).addScheduledTask(() ->
+        return new MessageCycleSeats();
+    }
+
+    @Override
+    public void handle(MessageCycleSeats message, Supplier<NetworkEvent.Context> supplier)
+    {
+        if(supplier.get().getDirection() == NetworkDirection.PLAY_TO_SERVER)
         {
-            EntityPlayerMP player = ctx.getServerHandler().player;
-            if(player != null && player.getRidingEntity() instanceof EntityVehicle)
+            supplier.get().enqueueWork(() ->
             {
-                EntityVehicle vehicle = (EntityVehicle) player.getRidingEntity();
-                List<Seat> seats = vehicle.getProperties().getSeats();
-
-                /* No need to cycle if already full of passengers */
-                if(vehicle.getPassengers().size() >= seats.size())
-                    return;
-
-                SeatTracker tracker = vehicle.getSeatTracker();
-                int seatIndex = tracker.getSeatIndex(player.getUniqueID());
-                for(int i = 0; i < seats.size() - 1; i++)
+                ServerPlayerEntity player = supplier.get().getSender();
+                if(player != null && player.getVehicle() instanceof VehicleEntity)
                 {
-                    int nextIndex = (seatIndex + (i + 1)) % seats.size();
-                    if(tracker.isSeatAvailable(nextIndex))
-                    {
-                        tracker.setSeatIndex(nextIndex, player.getUniqueID());
+                    VehicleEntity vehicle = (VehicleEntity) player.getVehicle();
+                    List<Seat> seats = vehicle.getProperties().getSeats();
+
+                    /* No need to cycle if already full of passengers */
+                    if(vehicle.getPassengers().size() >= seats.size())
                         return;
+
+                    SeatTracker tracker = vehicle.getSeatTracker();
+                    int seatIndex = tracker.getSeatIndex(player.getUUID());
+                    for(int i = 0; i < seats.size() - 1; i++)
+                    {
+                        int nextIndex = (seatIndex + (i + 1)) % seats.size();
+                        if(tracker.isSeatAvailable(nextIndex))
+                        {
+                            tracker.setSeatIndex(nextIndex, player.getUUID());
+                            return;
+                        }
                     }
                 }
-            }
-        });
-        return null;
+            });
+            supplier.get().setPacketHandled(true);
+        }
     }
 }

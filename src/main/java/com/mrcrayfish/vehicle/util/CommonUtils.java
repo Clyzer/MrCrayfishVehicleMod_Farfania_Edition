@@ -1,12 +1,10 @@
 package com.mrcrayfish.vehicle.util;
 
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.network.play.server.SPacketChat;
-import net.minecraft.util.text.ChatType;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.common.util.Constants;
 
 /**
@@ -14,39 +12,42 @@ import net.minecraftforge.common.util.Constants;
  */
 public class CommonUtils
 {
-    public static NBTTagCompound getItemTagCompound(ItemStack stack)
+    public static CompoundNBT getOrCreateStackTag(ItemStack stack)
     {
-        if(!stack.hasTagCompound())
+        if(stack.getTag() == null)
         {
-            stack.setTagCompound(new NBTTagCompound());
+            stack.setTag(new CompoundNBT());
         }
-        return stack.getTagCompound();
+        return stack.getTag();
     }
 
-    public static void writeItemStackToTag(NBTTagCompound parent, String key, ItemStack stack)
+    public static void writeItemStackToTag(CompoundNBT compound, String key, ItemStack stack)
     {
         if(!stack.isEmpty())
         {
-            NBTTagCompound tag = new NBTTagCompound();
-            stack.writeToNBT(tag);
-            parent.setTag(key, tag);
+            compound.put(key, stack.save(new CompoundNBT()));
         }
     }
 
-    public static ItemStack readItemStackFromTag(NBTTagCompound parent, String key)
+    public static ItemStack readItemStackFromTag(CompoundNBT compound, String key)
     {
-        if(parent.hasKey(key, Constants.NBT.TAG_COMPOUND))
+        if(compound.contains(key, Constants.NBT.TAG_COMPOUND))
         {
-            return new ItemStack(parent.getCompoundTag(key));
+            return ItemStack.of(compound.getCompound(key));
         }
         return ItemStack.EMPTY;
     }
 
-    public static void sendInfoMessage(EntityPlayer player, String message)
+    public static void sendInfoMessage(PlayerEntity player, String message)
     {
-        if(player instanceof EntityPlayerMP)
+        if(player instanceof ServerPlayerEntity)
         {
-            ((EntityPlayerMP) player).connection.sendPacket(new SPacketChat(new TextComponentTranslation(message), ChatType.GAME_INFO));
+            player.displayClientMessage(new TranslationTextComponent(message), true);
         }
+    }
+
+    public static boolean isMouseWithin(int mouseX, int mouseY, int x, int y, int width, int height)
+    {
+        return mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
     }
 }

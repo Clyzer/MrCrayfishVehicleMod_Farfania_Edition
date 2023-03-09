@@ -1,82 +1,83 @@
 package com.mrcrayfish.vehicle.client.render.layer;
 
-import com.mrcrayfish.vehicle.client.HeldVehicleEvents;
-import com.mrcrayfish.vehicle.common.CommonEvents;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mrcrayfish.vehicle.client.handler.HeldVehicleHandler;
+import com.mrcrayfish.vehicle.client.render.AbstractVehicleRenderer;
+import com.mrcrayfish.vehicle.client.render.Axis;
+import com.mrcrayfish.vehicle.client.render.CachedVehicle;
 import com.mrcrayfish.vehicle.common.entity.HeldVehicleDataHandler;
-import com.mrcrayfish.vehicle.entity.EntityVehicle;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.AbstractClientPlayer;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.entity.Render;
+import com.mrcrayfish.vehicle.entity.VehicleEntity;
+import net.minecraft.client.entity.player.AbstractClientPlayerEntity;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.entity.IEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.LayerRenderer;
+import net.minecraft.client.renderer.entity.model.PlayerModel;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.entity.EntityType;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.math.vector.Vector3d;
 
-import java.lang.reflect.InvocationTargetException;
+import java.util.Optional;
 
 /**
  * Author: MrCrayfish
  */
-public class LayerHeldVehicle implements LayerRenderer<AbstractClientPlayer>
+public class LayerHeldVehicle extends LayerRenderer<AbstractClientPlayerEntity, PlayerModel<AbstractClientPlayerEntity>>
 {
-    private Class<? extends Entity> cachedClass = null;
-    private EntityVehicle cachedEntity = null;
+    private VehicleEntity vehicle;
+    private CachedVehicle cachedVehicle;
+    private float width = -1.0F;
+
+    public LayerHeldVehicle(IEntityRenderer<AbstractClientPlayerEntity, PlayerModel<AbstractClientPlayerEntity>> renderer)
+    {
+        super(renderer);
+    }
 
     @Override
-    public void doRenderLayer(AbstractClientPlayer player, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, float scale)
+    @SuppressWarnings("unchecked")
+    public void render(MatrixStack matrixStack, IRenderTypeBuffer renderTypeBuffer, int light, AbstractClientPlayerEntity player, float v, float v1, float partialTicks, float v3, float v4, float v5)
     {
-        NBTTagCompound tagCompound = HeldVehicleDataHandler.getHeldVehicle(player);
-        if(!tagCompound.hasNoTags())
+        CompoundNBT tagCompound = HeldVehicleDataHandler.getHeldVehicle(player);
+        if(!tagCompound.isEmpty())
         {
-            Class<? extends Entity> entityClass = EntityList.getClassFromName(tagCompound.getString("id"));
-            if(entityClass != null && cachedClass != entityClass && EntityVehicle.class.isAssignableFrom(entityClass))
+            if(this.cachedVehicle == null)
             {
-                try
+                Optional<EntityType<?>> optional = EntityType.byString(tagCompound.getString("id"));
+                if(optional.isPresent())
                 {
-                    cachedClass = entityClass;
-                    cachedEntity = (EntityVehicle) entityClass.getDeclaredConstructor(World.class).newInstance(player.world);
-                    cachedEntity.readFromNBT(tagCompound);
-                    cachedEntity.getDataManager().getAll().forEach(dataEntry -> cachedEntity.notifyDataManagerChange(dataEntry.getKey()));
-                }
-                catch(NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e)
-                {
-                    e.printStackTrace();
+                    EntityType<?> entityType = optional.get();
+                    Entity entity = entityType.create(player.level);
+                    if(entity instanceof VehicleEntity)
+                    {
+                        entity.load(tagCompound);
+                        this.vehicle = (VehicleEntity) entity;
+                        this.width = entity.getBbWidth();
+                        this.cachedVehicle = new CachedVehicle(entityType);
+                    }
                 }
             }
-            if(cachedEntity != null && cachedClass != null)
+            if(this.cachedVehicle != null)
             {
-                GlStateManager.pushMatrix();
+                matrixStack.pushPose();
+                HeldVehicleHandler.AnimationCounter counter = HeldVehicleHandler.idToCounter.get(player.getUUID());
+                if(counter != null)
                 {
-                    HeldVehicleEvents.AnimationCounter counter = HeldVehicleEvents.idToCounter.get(player.getUniqueID());
-                    if(counter != null)
-                    {
-                        float width = cachedEntity.width / 2;
-                        GlStateManager.translate(0F, 1F - 1F * counter.getProgress(partialTicks), -0.5F * Math.sin(Math.PI * counter.getProgress(partialTicks)) - width * (1.0F - counter.getProgress(partialTicks)));
-                    }
-                    Vec3d heldOffset = cachedEntity.getProperties().getHeldOffset();
-                    GlStateManager.translate(heldOffset.x * 0.0625D, heldOffset.y * 0.0625D, heldOffset.z * 0.0625D);
-                    GlStateManager.rotate(180F, 1, 0, 0);
-                    GlStateManager.rotate(-90F, 0, 1, 0);
-                    GlStateManager.translate(0F, player.isSneaking() ? 0.3F : 0.5F, 0F);
-                    Render<Entity> render = Minecraft.getMinecraft().getRenderManager().getEntityClassRenderObject(cachedClass);
-                    render.doRender(cachedEntity, 0.0D, 0.0D, 0.0D, 0F, 0F);
+                    float width = this.width / 2;
+                    matrixStack.translate(0F, 1F - counter.getProgress(partialTicks), -0.5F * Math.sin(Math.PI * counter.getProgress(partialTicks)) - width * (1.0F - counter.getProgress(partialTicks)));
                 }
-                GlStateManager.popMatrix();
+                Vector3d heldOffset = this.cachedVehicle.getProperties().getHeldOffset();
+                matrixStack.translate(heldOffset.x * 0.0625D, heldOffset.y * 0.0625D, heldOffset.z * 0.0625D);
+                matrixStack.mulPose(Axis.POSITIVE_X.rotationDegrees(180F));
+                matrixStack.mulPose(Axis.POSITIVE_Y.rotationDegrees(-90F));
+                matrixStack.translate(0F, player.isCrouching() ? 0.3125F : 0.5625F, 0F);
+                ((AbstractVehicleRenderer<VehicleEntity>)this.cachedVehicle.getRenderer()).setupTransformsAndRender(this.vehicle, matrixStack, renderTypeBuffer, partialTicks, light);
+                matrixStack.popPose();
             }
         }
         else
         {
-            cachedClass = null;
-            cachedEntity = null;
+            this.cachedVehicle = null;
+            this.width = -1.0F;
         }
-    }
-
-    @Override
-    public boolean shouldCombineTextures()
-    {
-        return false;
     }
 }

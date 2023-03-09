@@ -1,122 +1,111 @@
 package com.mrcrayfish.vehicle.client.render.tileentity;
 
-import com.mrcrayfish.vehicle.client.render.RenderVehicleWrapper;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
+import com.mrcrayfish.vehicle.client.model.SpecialModels;
+import com.mrcrayfish.vehicle.client.render.AbstractVehicleRenderer;
+import com.mrcrayfish.vehicle.client.render.Axis;
 import com.mrcrayfish.vehicle.client.render.VehicleRenderRegistry;
-import com.mrcrayfish.vehicle.entity.EntityVehicle;
+import com.mrcrayfish.vehicle.entity.VehicleEntity;
 import com.mrcrayfish.vehicle.init.ModBlocks;
-import com.mrcrayfish.vehicle.tileentity.TileEntityJack;
-import net.minecraft.block.state.IBlockState;
+import com.mrcrayfish.vehicle.tileentity.JackTileEntity;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.PistonHeadBlock;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.*;
-import net.minecraft.client.renderer.block.model.IBakedModel;
-import net.minecraft.client.renderer.texture.TextureMap;
-import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.client.renderer.BlockRendererDispatcher;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
+import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.IBlockAccess;
-import net.minecraftforge.client.MinecraftForgeClient;
-import org.lwjgl.opengl.GL11;
+import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.math.vector.Vector3f;
+import net.minecraftforge.client.model.data.EmptyModelData;
+
+import java.util.Random;
 
 /**
  * Author: MrCrayfish
  */
-public class JackRenderer extends TileEntitySpecialRenderer<TileEntityJack>
+public class JackRenderer extends TileEntityRenderer<JackTileEntity>
 {
-    @Override
-    @SuppressWarnings("unchecked")
-    public void render(TileEntityJack te, double x, double y, double z, float partialTicks, int destroyStage, float alpha)
+    public JackRenderer(TileEntityRendererDispatcher dispatcher)
     {
-        GlStateManager.pushMatrix();
+        super(dispatcher);
+    }
+
+    @Override
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public void render(JackTileEntity jack, float partialTicks, MatrixStack matrixStack, IRenderTypeBuffer renderTypeBuffer, int light, int i1)
+    {
+        if(!jack.hasLevel())
+            return;
+
+        matrixStack.pushPose();
+
+        BlockPos pos = jack.getBlockPos();
+        BlockState state = jack.getLevel().getBlockState(pos);
+
+        matrixStack.pushPose();
         {
-            GlStateManager.translate(x, y, z);
+            matrixStack.translate(0.5, 0.0, 0.5);
+            matrixStack.mulPose(Axis.POSITIVE_Y.rotationDegrees(180F));
+            matrixStack.translate(-0.5, 0.0, -0.5);
+            BlockRendererDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
+            IBakedModel model = dispatcher.getBlockModel(state);
+            IVertexBuilder builder = renderTypeBuffer.getBuffer(RenderType.cutout());
+            dispatcher.getModelRenderer().tesselateBlock(jack.getLevel(), model, state, pos, matrixStack, builder, true, new Random(), state.getSeed(pos), OverlayTexture.NO_OVERLAY);
+        }
+        matrixStack.popPose();
 
-            Tessellator tessellator = Tessellator.getInstance();
-            BufferBuilder buffer = tessellator.getBuffer();
-            this.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-            RenderHelper.disableStandardItemLighting();
-            GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-            GlStateManager.enableBlend();
-            GlStateManager.disableCull();
+        matrixStack.pushPose();
+        {
+            float progress = (jack.prevLiftProgress + (jack.liftProgress - jack.prevLiftProgress) * partialTicks) / (float) JackTileEntity.MAX_LIFT_PROGRESS;
+            matrixStack.translate(0, 0.5 * progress, 0);
 
-            if(Minecraft.isAmbientOcclusionEnabled())
+            //Render the head
+            BlockRendererDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
+            BlockState defaultState = ModBlocks.JACK_HEAD.get().defaultBlockState();
+            IBakedModel model = dispatcher.getBlockModel(ModBlocks.JACK_HEAD.get().defaultBlockState());
+            IVertexBuilder builder = renderTypeBuffer.getBuffer(RenderType.cutout());
+            dispatcher.getModelRenderer().tesselateBlock(this.renderer.level, model, defaultState, pos, matrixStack, builder, false, this.renderer.level.random, 0L, light);
+        }
+        matrixStack.popPose();
+
+        matrixStack.pushPose();
+        {
+            Entity jackEntity = jack.getJack();
+            if(jackEntity != null && jackEntity.getPassengers().size() > 0)
             {
-                GlStateManager.shadeModel(GL11.GL_SMOOTH);
-            }
-            else
-            {
-                GlStateManager.shadeModel(GL11.GL_FLAT);
-            }
-
-            BlockPos pos = te.getPos();
-            IBlockAccess world = MinecraftForgeClient.getRegionRenderCache(te.getWorld(), pos);
-            IBlockState state = world.getBlockState(pos);
-            BlockRendererDispatcher rendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
-
-            GlStateManager.pushMatrix();
-            {
-                float scale = 1.0F;
-                GlStateManager.translate(0.5, 0, 0.5);
-                GlStateManager.scale(scale, scale, scale);
-                GlStateManager.translate(-0.5, 0, -0.5);
-
-                //Render the base
-                IBakedModel model = rendererDispatcher.getBlockModelShapes().getModelForState(state);
-                buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
-                buffer.setTranslation(-pos.getX(), -pos.getY(), -pos.getZ());
-                rendererDispatcher.getBlockModelRenderer().renderModel(te.getWorld(), model, state, pos, buffer, false);
-                buffer.setTranslation(0, 0, 0);
-                tessellator.draw();
-            }
-            GlStateManager.popMatrix();
-
-            GlStateManager.pushMatrix();
-            {
-                GlStateManager.translate(0, -2 * 0.0625, 0);
-                float progress = (te.prevLiftProgress + (te.liftProgress - te.prevLiftProgress) * partialTicks) / (float) TileEntityJack.MAX_LIFT_PROGRESS;
-                GlStateManager.translate(0, 0.5 * progress, 0);
-
-                //Render the head
-                IBakedModel model = rendererDispatcher.getBlockModelShapes().getModelForState(ModBlocks.JACK_HEAD.getDefaultState());
-                buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
-                buffer.setTranslation(-pos.getX(), -pos.getY(), -pos.getZ());
-                rendererDispatcher.getBlockModelRenderer().renderModel(te.getWorld(), model, state, pos, buffer, false);
-                buffer.setTranslation(0, 0, 0);
-                tessellator.draw();
-            }
-            GlStateManager.popMatrix();
-
-            GlStateManager.pushMatrix();
-            {
-                Entity jack = te.getJack();
-                if(jack != null && jack.getPassengers().size() > 0)
+                Entity passenger = jackEntity.getPassengers().get(0);
+                if(passenger instanceof VehicleEntity && passenger.isAlive())
                 {
-                    Entity passenger = jack.getPassengers().get(0);
-                    if(passenger instanceof EntityVehicle && !passenger.isDead)
+                    matrixStack.translate(0, 1 * 0.0625, 0);
+                    matrixStack.translate(0.5, 0.5, 0.5);
+                    float progress = (jack.prevLiftProgress + (jack.liftProgress - jack.prevLiftProgress) * partialTicks) / (float) JackTileEntity.MAX_LIFT_PROGRESS;
+                    matrixStack.translate(0, 0.5 * progress, 0);
+
+                    VehicleEntity vehicle = (VehicleEntity) passenger;
+                    Vector3d heldOffset = vehicle.getProperties().getHeldOffset().yRot(passenger.yRot * 0.017453292F);
+                    matrixStack.translate(-heldOffset.z * 0.0625, -heldOffset.y * 0.0625, -heldOffset.x * 0.0625);
+                    matrixStack.mulPose(Axis.POSITIVE_Y.rotationDegrees(-passenger.yRot));
+
+                    AbstractVehicleRenderer wrapper = VehicleRenderRegistry.getRenderer(vehicle.getType());
+                    if(wrapper != null)
                     {
-                        GlStateManager.translate(0.5, 0.5, 0.5);
-                        GlStateManager.translate(0, -1 * 0.0625, 0);
-                        float progress = (te.prevLiftProgress + (te.liftProgress - te.prevLiftProgress) * partialTicks) / (float) TileEntityJack.MAX_LIFT_PROGRESS;
-                        GlStateManager.translate(0, 0.5 * progress, 0);
-
-                        EntityVehicle vehicle = (EntityVehicle) passenger;
-                        Vec3d heldOffset = vehicle.getProperties().getHeldOffset().rotateYaw(passenger.rotationYaw * 0.017453292F);
-                        GlStateManager.translate(-heldOffset.z * 0.0625, -heldOffset.y * 0.0625, -heldOffset.x * 0.0625);
-                        GlStateManager.rotate(-passenger.rotationYaw, 0, 1, 0);
-
-                        RenderVehicleWrapper wrapper = VehicleRenderRegistry.getRenderWrapper(vehicle.getClass());
-                        if(wrapper != null)
-                        {
-                            wrapper.render(vehicle, partialTicks);
-                        }
+                        wrapper.setupTransformsAndRender(vehicle, matrixStack, renderTypeBuffer, partialTicks, light);
                     }
                 }
             }
-            GlStateManager.popMatrix();
-
-            RenderHelper.enableStandardItemLighting();
         }
-        GlStateManager.popMatrix();
+        matrixStack.popPose();
+
+        matrixStack.popPose();
     }
 }

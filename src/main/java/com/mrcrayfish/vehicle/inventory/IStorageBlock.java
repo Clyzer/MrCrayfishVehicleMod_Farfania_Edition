@@ -1,20 +1,21 @@
 package com.mrcrayfish.vehicle.inventory;
 
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.ItemStackHelper;
+import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.NonNullList;
 
 /**
  * Author: MrCrayfish
  */
-public interface IStorageBlock extends IInventory
+public interface IStorageBlock extends IInventory, INamedContainerProvider
 {
     NonNullList<ItemStack> getInventory();
 
     @Override
-    default int getSizeInventory()
+    default int getContainerSize()
     {
         return this.getInventory().size();
     }
@@ -33,24 +34,24 @@ public interface IStorageBlock extends IInventory
     }
 
     @Override
-    default ItemStack getStackInSlot(int index)
+    default ItemStack getItem(int index)
     {
         return index >= 0 && index < this.getInventory().size() ? this.getInventory().get(index) : ItemStack.EMPTY;
     }
 
     @Override
-    default ItemStack decrStackSize(int index, int count)
+    default ItemStack removeItem(int index, int count)
     {
-        ItemStack stack = ItemStackHelper.getAndSplit(this.getInventory(), index, count);
+        ItemStack stack = ItemStackHelper.removeItem(this.getInventory(), index, count);
         if (!stack.isEmpty())
         {
-            this.markDirty();
+            this.setChanged();
         }
         return stack;
     }
 
     @Override
-    default ItemStack removeStackFromSlot(int index)
+    default ItemStack removeItemNoUpdate(int index)
     {
         ItemStack stack = this.getInventory().get(index);
         if (stack.isEmpty())
@@ -65,65 +66,25 @@ public interface IStorageBlock extends IInventory
     }
 
     @Override
-    default void setInventorySlotContents(int index, ItemStack stack)
+    default void setItem(int index, ItemStack stack)
     {
         this.getInventory().set(index, stack);
-        if(!stack.isEmpty() && stack.getCount() > this.getInventoryStackLimit())
+        if(!stack.isEmpty() && stack.getCount() > this.getMaxStackSize())
         {
-            stack.setCount(this.getInventoryStackLimit());
+            stack.setCount(this.getMaxStackSize());
         }
-        this.markDirty();
+        this.setChanged();
     }
 
     @Override
-    default int getInventoryStackLimit()
-    {
-        return 64;
-    }
-
-    @Override
-    default boolean isUsableByPlayer(EntityPlayer player)
+    default boolean stillValid(PlayerEntity player)
     {
         return false;
     }
 
     @Override
-    default void openInventory(EntityPlayer player) {}
-
-    @Override
-    default void closeInventory(EntityPlayer player) {}
-
-    @Override
-    default boolean isItemValidForSlot(int index, ItemStack stack)
-    {
-        return true;
-    }
-
-    @Override
-    default int getField(int id)
-    {
-        return 0;
-    }
-
-    @Override
-    default void setField(int id, int value) {}
-
-    @Override
-    default int getFieldCount()
-    {
-        return 0;
-    }
-
-    @Override
-    default void clear()
+    default void clearContent()
     {
         this.getInventory().clear();
     }
-
-    @Override
-    default boolean hasCustomName()
-    {
-        return false;
-    }
-
 }

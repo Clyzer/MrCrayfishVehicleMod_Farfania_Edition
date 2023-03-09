@@ -1,30 +1,26 @@
 package com.mrcrayfish.vehicle.init;
 
 import com.mrcrayfish.vehicle.Reference;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fluids.Fluid;
-import net.minecraftforge.fluids.FluidRegistry;
+import com.mrcrayfish.vehicle.fluid.BlazeJuice;
+import com.mrcrayfish.vehicle.fluid.EnderSap;
+import com.mrcrayfish.vehicle.fluid.Fuelium;
+import net.minecraft.fluid.FlowingFluid;
+import net.minecraft.fluid.Fluid;
+import net.minecraftforge.fml.RegistryObject;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
 
 /**
  * Author: MrCrayfish
  */
 public class ModFluids
 {
-    public static final Fluid FUELIUM;
-    public static final Fluid ENDER_SAP;
-    public static final Fluid BLAZE_JUICE;
+    public static final DeferredRegister<Fluid> REGISTER = DeferredRegister.create(ForgeRegistries.FLUIDS, Reference.MOD_ID);
 
-    static
-    {
-        FUELIUM = new Fluid("fuelium", new ResourceLocation(Reference.MOD_ID, "fluids/fuelium_still"), new ResourceLocation(Reference.MOD_ID, "fluids/fuelium_flow")).setDensity(900).setViscosity(900);
-        ENDER_SAP = new Fluid("ender_sap", new ResourceLocation(Reference.MOD_ID, "fluids/ender_sap_still"), new ResourceLocation(Reference.MOD_ID, "fluids/ender_sap_flow")).setViscosity(3000);
-        BLAZE_JUICE = new Fluid("blaze_juice", new ResourceLocation(Reference.MOD_ID, "fluids/blaze_juice_still"), new ResourceLocation(Reference.MOD_ID, "fluids/blaze_juice_flow")).setViscosity(800);
-    }
-
-    public static void register()
-    {
-        FluidRegistry.addBucketForFluid(FUELIUM);
-        FluidRegistry.addBucketForFluid(ENDER_SAP);
-        FluidRegistry.addBucketForFluid(BLAZE_JUICE);
-    }
+    public static final RegistryObject<Fluid> FUELIUM = REGISTER.register("fuelium", Fuelium.Source::new);
+    public static final RegistryObject<FlowingFluid> FLOWING_FUELIUM = REGISTER.register("flowing_fuelium", Fuelium.Flowing::new);
+    public static final RegistryObject<Fluid> ENDER_SAP = REGISTER.register("ender_sap", EnderSap.Source::new);
+    public static final RegistryObject<FlowingFluid> FLOWING_ENDER_SAP = REGISTER.register("flowing_ender_sap", EnderSap.Flowing::new);
+    public static final RegistryObject<Fluid> BLAZE_JUICE = REGISTER.register("blaze_juice", BlazeJuice.Source::new);
+    public static final RegistryObject<FlowingFluid> FLOWING_BLAZE_JUICE = REGISTER.register("flowing_blaze_juice", BlazeJuice.Flowing::new);
 }

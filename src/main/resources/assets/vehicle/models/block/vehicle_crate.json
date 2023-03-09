@@ -1,5 +1,6 @@
 {
     "textures": {
-        "particle": "blocks/iron_block"
-    }
+        "particle": "vehicle:block/metal"
+    },
+    "elements": []
 }
