@@ -75,7 +75,7 @@ public class DeportiveRenderer extends AbstractLandVehicleRenderer<DeportiveEnti
     {
         return (tracer, transforms, parts) ->
         {
-            EntityRayTracer.createTransformListForPart(SpecialModels.SMART_CAR_BODY, parts, transforms);
+            EntityRayTracer.createTransformListForPart(SpecialModels.DEPORTIVE_BODY, parts, transforms);
             EntityRayTracer.createTransformListForPart(SpecialModels.GO_KART_STEERING_WHEEL, parts, transforms,
                     EntityRayTracer.MatrixTransformation.createTranslation(0.0F, 0.2F, 0.3F),
                     EntityRayTracer.MatrixTransformation.createRotation(Axis.POSITIVE_X, -67.5F),
@@ -84,7 +84,7 @@ public class DeportiveRenderer extends AbstractLandVehicleRenderer<DeportiveEnti
             EntityRayTracer.createTransformListForPart(SpecialModels.TOW_BAR, parts,
                     EntityRayTracer.MatrixTransformation.createRotation(Axis.POSITIVE_Y, 180F),
                     EntityRayTracer.MatrixTransformation.createTranslation(0.0F, 0.5F, 1.35F));
-            EntityRayTracer.createFuelPartTransforms(ModEntities.SMART_CAR.get(), SpecialModels.FUEL_DOOR_CLOSED, parts, transforms);
+            EntityRayTracer.createFuelPartTransforms(ModEntities.DEPORTIVE.get(), SpecialModels.FUEL_DOOR_CLOSED, parts, transforms);
         };
     }
 }
