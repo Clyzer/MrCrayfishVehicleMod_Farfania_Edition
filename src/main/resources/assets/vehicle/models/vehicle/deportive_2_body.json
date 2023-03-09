@@ -2,9 +2,9 @@
 	"credit": "Made with Blockbench",
 	"texture_size": [1024, 1024],
 	"textures": {
-		"13": "vehicle:models/athl_industries_2",
-		"ahegao": "vehicle:models/ahegao",
-		"ahegao2": "vehicle:models/ahegao2",
+		"13": "vehicle:model/athl_industries_2",
+		"ahegao": "vehicle:model/ahegao",
+		"ahegao2": "vehicle:model/ahegao2",
 		"seat": "minecraft:blocks/wool_colored_black",
 		"indicator_light": "minecraft:blocks/glass_orange",
 		"axel": "minecraft:blocks/stone",
@@ -12,7 +12,7 @@
 		"steering_wheel_shaft": "minecraft:blocks/concrete_silver",
 		"headlights": "minecraft:blocks/glass_white",
 		"windshield": "minecraft:blocks/glass",
-		"grill": "vehicle:models/grill",
+		"grill": "vehicle:model/grill",
 		"frame": "minecraft:blocks/anvil_base",
 		"base": "minecraft:blocks/concrete_white"
 	},
