@@ -113,6 +113,10 @@
     "entity.vehicle.tractor": "Tractor",
     "entity.vehicle.mini_bus": "Mini Bus",
     "entity.vehicle.dirt_bike": "Dirt Bike",
+    "entity.vehicle.deportive": "Deportive",
+    "entity.vehicle.deportive_2": "Deportive 2",
+    "entity.vehicle.deportive_3": "Deportive 3",
+    
 
     "vehicle.config.title": "MrCrayfish's Vehicle Mod Config",
     "vehicle.config.client": "Client",
