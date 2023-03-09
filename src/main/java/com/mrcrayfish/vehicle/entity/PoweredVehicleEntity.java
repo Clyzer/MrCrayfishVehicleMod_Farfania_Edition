@@ -452,9 +452,16 @@ public abstract class PoweredVehicleEntity extends VehicleEntity implements IInv
         {
             for(Entity entity : list)
             {
-                if (!(entity instanceof TrailerEntity)) {
-                	this.push(entity);
+                if (!(entity instanceof TrailerEntity) && entity instanceof LandVehicleEntity && this instanceof LandVehicleEntity) {
+                    LandVehicleEntity landvehicle = (LandVehicleEntity) this;
+                    LandVehicleEntity landvehicle2 = (LandVehicleEntity) entity;
+                    landvehicle.pushed(landvehicle2);
                     for(Entity passenger : this.getPassengers())
+                    {
+                        passenger.hurt(DamageSource.GENERIC, this.getSpeed());
+                    }
+                    
+                    for(Entity passenger : entity.getPassengers())
                     {
                         passenger.hurt(DamageSource.GENERIC, this.getSpeed());
                     }

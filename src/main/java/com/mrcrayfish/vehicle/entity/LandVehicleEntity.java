@@ -304,17 +304,20 @@ public abstract class LandVehicleEntity extends PoweredVehicleEntity
         return true;
     }
 
-    @Override
-    public void push(Entity entityIn)
+    public void pushed(LandVehicleEntity entity)
     {
-        if(entityIn instanceof LandVehicleEntity && this.isVehicle())
+        if(entity instanceof LandVehicleEntity && this.isVehicle())
         {
-            applyCollision(entityIn);
+            this.applyCollision(entity);
         }
     }
 
-    private void applyCollision(Entity entity)
+    private void applyCollision(LandVehicleEntity entity)
     {
+        entity.setDeltaMovement(this.getDeltaMovement().add(this.vehicleMotionX * 2, 0, this.vehicleMotionZ * 2));
+        level.playSound(null, this.getX(), this.getY(), this.getZ(), ModSounds.ENTITY_VEHICLE_IMPACT.get(), SoundCategory.NEUTRAL, 1.0F, 0.6F + 0.1F * this.getNormalSpeed());
+        entity.currentSpeed *= 0.25F;
+        
         this.setDeltaMovement(this.getDeltaMovement().add(-(this.vehicleMotionX * 2), 0, -(this.vehicleMotionZ * 2)));
         level.playSound(null, this.getX(), this.getY(), this.getZ(), ModSounds.ENTITY_VEHICLE_IMPACT.get(), SoundCategory.NEUTRAL, 1.0F, 0.6F + 0.1F * this.getNormalSpeed());
         this.currentSpeed *= 0.25F;
