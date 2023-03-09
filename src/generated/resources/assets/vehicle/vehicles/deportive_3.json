@@ -11,6 +11,7 @@
     },
     "display": {
         "held": [ 3.0, 1.0, 0.0 ],
+        "trailer": [ 0.0, 0.0, -1.0 ],
         "gui": {
             "scale": 1.35
         }
@@ -24,7 +25,12 @@
             "rotation": [ 0.0, -90, 0.0 ],
             "scale": 0.25
         },
-        "towBar": [ -1.0, 0.0, -33 ]
+        "keyPort": {
+            "translate": [ 10.0, 6.5, 8.0 ],
+            "rotation": [ -90, 0.0, 0.0 ],
+            "scale": 0.5
+        },
+        "towBar": [ 0.0, 0.0, -31.5 ]
     },
     "wheels": [
         {
@@ -60,16 +66,13 @@
             "driver": true
         },
         {
-            "position": [ -4.5, 0.5, -8.0 ],
-            "driver": false
+            "position": [ -4.5, 0.5, -8.0 ]
         },
         {
-            "position": [ 5.5, 0.5, 2.0 ],
-            "driver": false
+            "position": [ 5.5, 0.5, 2.0 ]
         },
         {
-            "position": [ 5.5, 0.5, -8.0 ],
-            "driver": false
+            "position": [ 5.5, 0.5, -8.0 ]
         }
     ]
 }
