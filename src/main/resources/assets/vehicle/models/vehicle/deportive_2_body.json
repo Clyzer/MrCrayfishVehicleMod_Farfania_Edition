@@ -5,16 +5,16 @@
 		"13": "vehicle:model/athl_industries_2",
 		"ahegao": "vehicle:model/ahegao",
 		"ahegao2": "vehicle:model/ahegao2",
-		"seat": "minecraft:block/wool_colored_black",
-		"indicator_light": "minecraft:block/glass_orange",
+		"seat": "minecraft:block/black_wool",
+		"indicator_light": "minecraft:block/orange_stained_glass",
 		"axel": "minecraft:block/stone",
-		"brake_light": "minecraft:block/glass_red",
-		"steering_wheel_shaft": "minecraft:block/concrete_silver",
-		"headlights": "minecraft:block/glass_white",
+		"brake_light": "minecraft:block/red_stained_glass",
+		"steering_wheel_shaft": "minecraft:block/light_gray_concrete",
+		"headlights": "minecraft:block/white_stained_glass",
 		"windshield": "minecraft:block/glass",
 		"grill": "vehicle:model/grill",
-		"frame": "minecraft:block/anvil_base",
-		"base": "minecraft:block/concrete_white"
+		"frame": "minecraft:block/anvil",
+		"base": "minecraft:block/white_concrete"
 	},
 	"elements": [
 		{

@@ -456,7 +456,7 @@ public abstract class PoweredVehicleEntity extends VehicleEntity implements IInv
                 	this.push(entity);
                     for(Entity passenger : this.getPassengers())
                     {
-                        passenger.hurt(DamageSource.mobAttack((LivingEntity) entity), this.getSpeed());
+                        passenger.hurt(DamageSource.GENERIC, this.getSpeed());
                     }
                 }
             }
