@@ -56,8 +56,12 @@
     ],
     "seats": [
         {
-            "position": [ 0.0, 0.5, -2.0 ],
+            "position": [ -4.5, 0.5, 2.0 ],
             "driver": true
+        },
+        {
+            "position": [ -4.5, 0.5, -8.0 ],
+            "driver": false
         }
     ]
 }
